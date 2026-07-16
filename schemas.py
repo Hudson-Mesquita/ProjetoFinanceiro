@@ -1,7 +1,8 @@
 from pydantic import BaseModel
-
+from typing import Optional
 class CategoriaCreate(BaseModel):
     nome: str
+    limite: Optional[float] = 0.0
 
 class TransacaoCreate(BaseModel):
     descricao: str

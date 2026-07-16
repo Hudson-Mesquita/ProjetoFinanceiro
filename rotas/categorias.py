@@ -22,7 +22,7 @@ def criar_categoria(categoria: CategoriaCreate):
     cursor = conexao.cursor()
 
     cursor.execute("""
-    INSERT INTO categorias (nome) VALUES (?)""", (categoria.nome,))
+    INSERT INTO categorias (nome, limite) VALUES (?, ?)""", (categoria.nome, categoria.limite))
     conexao.commit()
 
     novo_id = cursor.lastrowid
@@ -31,6 +31,8 @@ def criar_categoria(categoria: CategoriaCreate):
     return {
         'mensagem': 'categoria criada com sucesso',
         'id': novo_id,
-        'nome': categoria.nome,}
+        'nome': categoria.nome,
+        'limite': categoria.limite
+        }
 
 

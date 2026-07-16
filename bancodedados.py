@@ -22,7 +22,8 @@ def iniciar_banco():
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS categorias(
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            nome TEXT NOT NULL
+            nome TEXT NOT NULL,
+            limite REAL DEFAULT 0
             )
     ''')
 
