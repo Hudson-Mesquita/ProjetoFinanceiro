@@ -1,8 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from uvicorn import lifespan
 from contextlib import asynccontextmanager
-
 from rotas import categorias, transacoes, dashboard, metas
 from bancodedados import iniciar_banco
 

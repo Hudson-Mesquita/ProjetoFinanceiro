@@ -5,6 +5,8 @@ import sqlite3
 
 def criar_conexao():
     conexao = sqlite3.connect('FinDash.db')
+    # Sem isso, o SQLite não aplicará restrições de chave estrangeira
+    conexao.execute("PRAGMA foreign_keys = ON")
 
     #eu quero retornar as informações desse banco de dados como um dicionário para consultas
     conexao.row_factory = sqlite3.Row
@@ -18,8 +20,6 @@ def iniciar_banco():
     # dentro do banco de dados
     cursor = conexao.cursor()
 
-    # Sem isso, o SQLite não aplicará restrições de chave estrangeira
-    conexao.execute("PRAGMA foreign_keys = ON")
 
 #aqui é a criação da tabela, criando uma chave primária chamada ID, que vai somando, tendo um nome
     cursor.execute('''
@@ -51,7 +51,7 @@ def iniciar_banco():
             data DATE NOT NULL,
             categoria_id Integer,
             meta_id INTEGER DEFAULT NULL,
-            FOREIGN KEY (categoria_id) REFERENCES categorias(id)
+            FOREIGN KEY (categoria_id) REFERENCES categorias(id),
             FOREIGN KEY (meta_id) REFERENCES metas(id)
             )
     ''')
