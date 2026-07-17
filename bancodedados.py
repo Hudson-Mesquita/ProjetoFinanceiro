@@ -37,10 +37,21 @@ def iniciar_banco():
             tipo TEXT NOT NULL,
             data DATE NOT NULL,
             categoria_id Integer,
+            meta_id INTEGER, DEFAULT NULL REFERENCES metas(id)
             FOREIGN KEY (categoria_id) REFERENCES categorias(id)
             )
     ''')
 
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS metas(
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            nome TEXT NOT NULL,
+            valor_alvo REAL NOT NULL,
+            prazo_meses INTEGER,
+            valor_mensal REAL,
+            status TEXT DEFAULT 'Em andamento'
+            )
+    ''')
     conexao.commit()
     conexao.close()
 

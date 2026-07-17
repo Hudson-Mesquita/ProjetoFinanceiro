@@ -12,8 +12,8 @@ def criar_transacao(transacao: TransacaoCreate):
     cursor = conexao.cursor()
 
     cursor.execute("""
-    INSERT INTO transacoes (descricao, valor, tipo, data, categoria_id)
-    VALUES (?, ?, ?, ?, ?)""", (transacao.descricao, transacao.valor, transacao.tipo, transacao.data, transacao.categoria_id))
+    INSERT INTO transacoes (descricao, valor, tipo, data, categoria_id, meta_id)
+    VALUES (?, ?, ?, ?, ?, ?)""", (transacao.descricao, transacao.valor, transacao.tipo, transacao.data, transacao.categoria_id, transacao.meta_id))
     conexao.commit()
     novo_id = cursor.lastrowid
     cursor.close()

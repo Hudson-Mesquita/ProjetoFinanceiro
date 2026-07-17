@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from rotas import categorias, transacoes, dashboard
+from rotas import categorias, transacoes, dashboard, metas
 
 
 # Inicializa API
@@ -9,3 +9,4 @@ app = FastAPI(title="FinDash API")
 app.include_router(categorias.router)
 app.include_router(transacoes.router)
 app.include_router(dashboard.router)
+app.include_router(metas.router)
