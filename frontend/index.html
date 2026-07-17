@@ -102,12 +102,94 @@
             </section>
 
             <!-- Espaço reservado para o futuro Gráfico (Mantido) -->
-            <section class="chart-section">
-                <h2>Análise Financeira</h2>
-                <div class="chart-placeholder">
-                    <i class="fa-solid fa-chart-line"></i>
-                    <p>O gráfico interativo entrará aqui em breve...</p>
+
+    <section class="chart-section">
+
+        <div class="chart-section-header">
+            <h2>Análise Financeira</h2>
+
+            <!--
+                As duas opções usam o mesmo canvas.
+                O JavaScript apenas destrói o gráfico anterior e desenha o novo.
+            -->
+            <div
+                class="chart-mode-switch"
+                role="tablist"
+                aria-label="Escolha do gráfico financeiro">
+
+                <button
+                    id="btn-grafico-fluxo"
+                    class="chart-mode-btn ativo"
+                    type="button"
+                    role="tab"
+                    aria-selected="true"
+                    data-chart-mode="fluxo">
+                    Fluxo mensal
+                </button>
+
+                <button
+                    id="btn-grafico-alocacao"
+                    class="chart-mode-btn"
+                    type="button"
+                    role="tab"
+                    aria-selected="false"
+                    data-chart-mode="alocacao">
+                    Alocação da renda
+                </button>
+
+            </div>
+        </div>
+
+        <div class="chart-card">
+
+            <div class="chart-card-header">
+                <div>
+                    <h3 id="titulo-grafico">
+                        Fluxo financeiro do mês
+                    </h3>
+
+                    <p id="descricao-grafico">
+                        Receitas, despesas e resultado acumulado por dia
+                    </p>
                 </div>
+
+                <!--
+                    Recebe uma informação curta, como:
+                    "82,5% da renda alocada".
+                    No gráfico de fluxo mensal ele fica oculto.
+                -->
+                <span
+                    id="resumo-grafico"
+                    class="chart-summary oculto">
+                </span>
+            </div>
+
+            <div class="chart-canvas-container">
+
+                <canvas
+                    id="grafico-financeiro"
+                    role="img"
+                    aria-label="Gráfico de análise financeira mensal">
+                </canvas>
+
+                <div
+                    id="grafico-vazio"
+                    class="chart-empty oculto">
+
+                    <i class="fa-solid fa-chart-line"></i>
+
+                    <p>
+                        Ainda não há dados suficientes para gerar o gráfico.
+                    </p>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </section>
+
             </section>
         </main>
     <!-- MODAL DE NOVA TRANSAÇÃO -->
@@ -194,6 +276,9 @@
             </div>
         </div>
     </div>
+    <script
+    src="https://cdn.jsdelivr.net/npm/chart.js@4.5.1/dist/chart.umd.min.js">
+    </script>
     <!-- sscript que fará a mágica no futuro -->
     <script src="app.js"></script>
 </body>

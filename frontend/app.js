@@ -16,9 +16,26 @@ const nomesMeses = [
     "Novembro",
     "Dezembro",
 ];
+
+/*
+ * Guarda a instância atual do Chart.js.
+ *
+ * Quando o usuário cria, edita ou exclui uma movimentação,
+ * o dashboard é recarregado. Precisamos destruir ou atualizar
+ * o gráfico anterior antes de desenhar outro no mesmo canvas.
+ */
+let graficoFinanceiro = null;
+let modoGraficoAtual = "fluxo";
 // Guarda o ID da transação atualmente sendo editada.
 // null significa que o modal está no modo "Nova movimentação".
 let transacaoEmEdicaoId = null;
+
+let contextoGraficoAtual = {
+    historico: [],
+    ano: null,
+    indiceMes: null,
+};
+
 function obterElemento(id) {
     const elemento = document.getElementById(id);
 
@@ -38,6 +55,24 @@ function formatarMoeda(valor) {
     return new Intl.NumberFormat("pt-BR", {
         style: "currency",
         currency: "BRL",
+    }).format(normalizarNumero(valor));
+}
+/**
+ * Formata valores de forma compacta para o eixo do gráfico.
+ *
+ * Exemplos:
+ * 1000   -> R$ 1 mil
+ * 15000  -> R$ 15 mil
+ *
+ * Nos tooltips continuaremos usando formatarMoeda(), que
+ * exibe o valor completo.
+ */
+function formatarMoedaCompacta(valor) {
+    return new Intl.NumberFormat("pt-BR", {
+        style: "currency",
+        currency: "BRL",
+        notation: "compact",
+        maximumFractionDigits: 1,
     }).format(normalizarNumero(valor));
 }
 
@@ -107,6 +142,43 @@ async function buscarJson(url, opcoes = {}) {
 
     return dados ?? {};
 }
+function destruirGraficoAtual() {
+    if (graficoFinanceiro) {
+        graficoFinanceiro.destroy();
+        graficoFinanceiro = null;
+    }
+}
+function mostrarGraficoVazio(mensagem) {
+    const canvas = obterElemento("grafico-financeiro");
+    const estadoVazio = obterElemento("grafico-vazio");
+    const resumo = obterElemento("resumo-grafico");
+
+    destruirGraficoAtual();
+
+    canvas.hidden = true;
+    resumo.classList.add("oculto");
+
+    const paragrafo = estadoVazio.querySelector("p");
+
+    if (paragrafo) {
+        paragrafo.textContent = mensagem;
+    }
+
+    estadoVazio.classList.remove("oculto");
+}
+
+function prepararCanvasGrafico() {
+    const canvas = obterElemento("grafico-financeiro");
+    const estadoVazio = obterElemento("grafico-vazio");
+
+    destruirGraficoAtual();
+
+    canvas.hidden = false;
+    estadoVazio.classList.add("oculto");
+
+    return canvas.getContext("2d");
+}
+
 
 function obterVisualTransacao(transacao) {
     const tipo = String(transacao.tipo ?? "").toLowerCase();
@@ -911,6 +983,852 @@ async function carregarCategoriasParaModal(
     }
 }
 
+/* =========================================================
+   GRÁFICO FINANCEIRO
+   ========================================================= */
+
+/**
+ * Agrupa as movimentações por dia.
+ *
+ * A API devolve uma lista semelhante a:
+ *
+ * {
+ *     data: "2026-07-17",
+ *     tipo: "despesa",
+ *     valor: 120
+ * }
+ *
+ * Para desenhar o gráfico, transformamos essa lista em:
+ *
+ * labels:   ["01", "02", "03", ...]
+ * receitas: [0, 500, 0, ...]
+ * despesas: [80, 0, 120, ...]
+ */
+function prepararDadosGraficoFluxo(historico, ano, indiceMes) {
+    const quantidadeDias =
+        new Date(ano, indiceMes + 1, 0).getDate();
+
+    const labels = [];
+    const receitasPorDia =
+        new Array(quantidadeDias).fill(0);
+
+    const despesasPorDia =
+        new Array(quantidadeDias).fill(0);
+
+    for (let dia = 1; dia <= quantidadeDias; dia += 1) {
+        labels.push(String(dia).padStart(2, "0"));
+    }
+
+    for (const transacao of historico) {
+        if (!transacao.data) {
+            continue;
+        }
+
+        const partesData =
+            String(transacao.data).split("-");
+
+        if (partesData.length !== 3) {
+            continue;
+        }
+
+        const anoTransacao =
+            Number.parseInt(partesData[0], 10);
+
+        const mesTransacao =
+            Number.parseInt(partesData[1], 10);
+
+        const diaTransacao =
+            Number.parseInt(partesData[2], 10);
+
+        if (
+            anoTransacao !== ano ||
+            mesTransacao !== indiceMes + 1 ||
+            diaTransacao < 1 ||
+            diaTransacao > quantidadeDias
+        ) {
+            continue;
+        }
+
+        const indiceDia = diaTransacao - 1;
+        const valor = normalizarNumero(transacao.valor);
+        const tipo =
+            String(transacao.tipo ?? "").toLowerCase();
+
+        if (
+            tipo === "receita" ||
+            tipo === "recebimento"
+        ) {
+            receitasPorDia[indiceDia] += valor;
+        } else if (tipo === "despesa") {
+            despesasPorDia[indiceDia] += valor;
+        }
+    }
+
+    const resultadoAcumulado = [];
+    let acumulado = 0;
+
+    for (
+        let indice = 0;
+        indice < quantidadeDias;
+        indice += 1
+    ) {
+        acumulado +=
+            receitasPorDia[indice] -
+            despesasPorDia[indice];
+
+        resultadoAcumulado.push(acumulado);
+    }
+
+    return {
+        labels,
+        receitasPorDia,
+        despesasPorDia,
+        resultadoAcumulado,
+    };
+}
+function renderizarGraficoFluxo(
+    historico,
+    ano,
+    indiceMes,
+) {
+    const titulo = obterElemento("titulo-grafico");
+    const descricao = obterElemento("descricao-grafico");
+    const resumo = obterElemento("resumo-grafico");
+
+    titulo.textContent = "Fluxo financeiro do mês";
+    descricao.textContent =
+        "Receitas, despesas e resultado acumulado por dia";
+
+    resumo.classList.add("oculto");
+
+    if (typeof Chart === "undefined") {
+        mostrarGraficoVazio(
+            "A biblioteca do gráfico não foi carregada.",
+        );
+        return;
+    }
+
+    if (!Array.isArray(historico) || historico.length === 0) {
+        mostrarGraficoVazio(
+            "Ainda não existem movimentações neste mês.",
+        );
+        return;
+    }
+
+    const dados =
+        prepararDadosGraficoFluxo(
+            historico,
+            ano,
+            indiceMes,
+        );
+
+    const contexto = prepararCanvasGrafico();
+
+    graficoFinanceiro = new Chart(contexto, {
+        type: "bar",
+
+        data: {
+            labels: dados.labels,
+
+            datasets: [
+                {
+                    label: "Receitas",
+                    data: dados.receitasPorDia,
+                    backgroundColor:
+                        "rgba(16, 185, 129, 0.45)",
+                    borderColor:
+                        "rgba(16, 185, 129, 1)",
+                    borderWidth: 1,
+                    borderRadius: 5,
+                    order: 2,
+                },
+                {
+                    label: "Despesas",
+                    data: dados.despesasPorDia,
+                    backgroundColor:
+                        "rgba(239, 68, 68, 0.45)",
+                    borderColor:
+                        "rgba(239, 68, 68, 1)",
+                    borderWidth: 1,
+                    borderRadius: 5,
+                    order: 2,
+                },
+                {
+                    type: "line",
+                    label: "Resultado acumulado",
+                    data: dados.resultadoAcumulado,
+                    borderColor:
+                        "rgba(99, 102, 241, 1)",
+                    backgroundColor:
+                        "rgba(99, 102, 241, 0.15)",
+                    borderWidth: 3,
+
+                    /*
+                     * Evita que a curva crie picos ou vales
+                     * inexistentes entre os pontos.
+                     */
+                    cubicInterpolationMode: "monotone",
+                    tension: 0,
+
+                    pointRadius: 2,
+                    pointHoverRadius: 6,
+                    pointHitRadius: 12,
+                    fill: false,
+                    order: 1,
+                },
+            ],
+        },
+
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+
+            interaction: {
+                mode: "index",
+                intersect: false,
+            },
+
+            plugins: {
+                legend: {
+                    position: "top",
+
+                    labels: {
+                        color: "#f3f4f6",
+                        usePointStyle: true,
+                        padding: 20,
+                    },
+                },
+
+                tooltip: {
+                    backgroundColor: "#17171a",
+                    borderColor: "#374151",
+                    borderWidth: 1,
+                    titleColor: "#f3f4f6",
+                    bodyColor: "#f3f4f6",
+                    padding: 12,
+
+                    callbacks: {
+                        label(contextoTooltip) {
+                            const nome =
+                                contextoTooltip.dataset.label;
+
+                            const valor =
+                                contextoTooltip.parsed.y;
+
+                            return (
+                                `${nome}: ` +
+                                formatarMoeda(valor)
+                            );
+                        },
+
+                        title(itensTooltip) {
+                            const dia =
+                                itensTooltip[0]?.label ?? "";
+
+                            return `Dia ${dia}`;
+                        },
+                    },
+                },
+            },
+
+            scales: {
+                x: {
+                    ticks: {
+                        color: "#9ca3af",
+                        maxTicksLimit: 16,
+                    },
+
+                    grid: {
+                        display: false,
+                    },
+
+                    title: {
+                        display: true,
+                        text: "Dia do mês",
+                        color: "#9ca3af",
+                    },
+                },
+
+                y: {
+                    beginAtZero: true,
+
+                    ticks: {
+                        color: "#9ca3af",
+
+                        callback(valor) {
+                            return formatarMoedaCompacta(
+                                valor,
+                            );
+                        },
+                    },
+
+                    grid: {
+                        color:
+                            "rgba(55, 65, 81, 0.45)",
+                    },
+
+                    title: {
+                        display: true,
+                        text: "Valor",
+                        color: "#9ca3af",
+                    },
+                },
+            },
+        },
+    });
+}
+
+
+/* =========================================================
+   GRÁFICO 2: ALOCAÇÃO DA RENDA
+   ========================================================= */
+
+/**
+ * Retorna um rótulo para cada saída.
+ *
+ * Regras:
+ * - transação vinculada a uma meta: "Meta: descrição";
+ * - despesa comum: nome da categoria;
+ * - sem categoria: "Sem categoria".
+ */
+function obterRotuloAlocacao(transacao) {
+    const possuiMeta =
+        normalizarNumero(transacao.meta_id) > 0;
+
+    if (possuiMeta) {
+        const nomeMeta =
+            String(
+                transacao.descricao ??
+                "Reserva",
+            ).trim();
+
+        return `Meta: ${nomeMeta || "Reserva"}`;
+    }
+
+    return (
+        String(
+            transacao.categoria ??
+            "Sem categoria",
+        ).trim() ||
+        "Sem categoria"
+    );
+}
+
+function prepararDadosGraficoAlocacao(historico) {
+    let totalReceitas = 0;
+    let totalAlocado = 0;
+
+    const valoresPorCategoria = new Map();
+
+    for (const transacao of historico) {
+        const tipo =
+            String(transacao.tipo ?? "").toLowerCase();
+
+        const valor =
+            Math.abs(
+                normalizarNumero(transacao.valor),
+            );
+
+        /*
+         * Toda transação marcada como receita ou recebimento
+         * aumenta o tamanho total da renda do mês.
+         *
+         * A categoria "Salário", "Freelancer" etc. não vira
+         * uma fatia, pois representa origem do dinheiro.
+         */
+        if (
+            tipo === "receita" ||
+            tipo === "recebimento"
+        ) {
+            totalReceitas += valor;
+            continue;
+        }
+
+        /*
+         * Apenas aquilo marcado como despesa é considerado
+         * destino/alocação da renda.
+         *
+         * Uma meta entra aqui quando o aporte foi cadastrado
+         * como despesa e possui meta_id.
+         */
+        if (tipo !== "despesa") {
+            continue;
+        }
+
+        const rotulo =
+            obterRotuloAlocacao(transacao);
+
+        const valorAtual =
+            valoresPorCategoria.get(rotulo) ?? 0;
+
+        valoresPorCategoria.set(
+            rotulo,
+            valorAtual + valor,
+        );
+
+        totalAlocado += valor;
+    }
+
+    /*
+     * Ordena as categorias da maior para a menor.
+     */
+    const categoriasOrdenadas =
+        [...valoresPorCategoria.entries()]
+            .sort((a, b) => b[1] - a[1]);
+
+    const labels =
+        categoriasOrdenadas.map(
+            ([rotulo]) => rotulo,
+        );
+
+    const valores =
+        categoriasOrdenadas.map(
+            ([, valor]) => valor,
+        );
+
+    /*
+     * Quando a renda é maior do que as saídas,
+     * a diferença vira a fatia "Não alocado".
+     *
+     * Assim, a soma da pizza é exatamente igual
+     * ao total de receitas do mês.
+     */
+    const naoAlocado =
+        Math.max(
+            totalReceitas - totalAlocado,
+            0,
+        );
+
+    if (naoAlocado > 0) {
+        labels.push("Não alocado");
+        valores.push(naoAlocado);
+    }
+
+    const valorExcedente =
+        Math.max(
+            totalAlocado - totalReceitas,
+            0,
+        );
+
+    const percentualAlocado =
+        totalReceitas > 0
+            ? (totalAlocado / totalReceitas) * 100
+            : 0;
+
+    return {
+        labels,
+        valores,
+        totalReceitas,
+        totalAlocado,
+        naoAlocado,
+        valorExcedente,
+        percentualAlocado,
+    };
+}
+
+
+/**
+ * Plugin local do Chart.js.
+ *
+ * Escreve o total de receitas no centro do doughnut.
+ */
+const pluginTextoCentralDoughnut = {
+    id: "textoCentralDoughnut",
+
+    afterDraw(chart, args, opcoes) {
+        if (chart.config.type !== "doughnut") {
+            return;
+        }
+
+        const {
+            ctx,
+            chartArea,
+        } = chart;
+
+        if (!chartArea) {
+            return;
+        }
+
+        const centroX =
+            (chartArea.left + chartArea.right) / 2;
+
+        const centroY =
+            (chartArea.top + chartArea.bottom) / 2;
+
+        ctx.save();
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+
+        ctx.fillStyle = "#9ca3af";
+        ctx.font =
+            "600 12px Arial, sans-serif";
+
+        ctx.fillText(
+            opcoes.rotulo ?? "Renda do mês",
+            centroX,
+            centroY - 14,
+        );
+
+        ctx.fillStyle = "#f3f4f6";
+        ctx.font =
+            "700 20px Arial, sans-serif";
+
+        ctx.fillText(
+            formatarMoeda(
+                opcoes.valor ?? 0,
+            ),
+            centroX,
+            centroY + 12,
+        );
+
+        ctx.restore();
+    },
+};
+
+function renderizarGraficoAlocacao(historico) {
+    const titulo = obterElemento("titulo-grafico");
+    const descricao = obterElemento("descricao-grafico");
+    const resumo = obterElemento("resumo-grafico");
+
+    titulo.textContent = "Alocação da renda no mês";
+    descricao.textContent =
+        "Distribuição das despesas, metas e valor ainda disponível";
+
+    if (typeof Chart === "undefined") {
+        mostrarGraficoVazio(
+            "A biblioteca do gráfico não foi carregada.",
+        );
+        return;
+    }
+
+    if (!Array.isArray(historico) || historico.length === 0) {
+        mostrarGraficoVazio(
+            "Ainda não existem movimentações neste mês.",
+        );
+        return;
+    }
+
+    const dados =
+        prepararDadosGraficoAlocacao(historico);
+
+    /*
+     * Sem receitas não existe um montante total da renda
+     * para usar como base percentual.
+     */
+    if (dados.totalReceitas <= 0) {
+        mostrarGraficoVazio(
+            "Cadastre pelo menos uma receita para analisar a alocação da renda.",
+        );
+        return;
+    }
+
+    /*
+     * Se não há despesas nem metas, mostramos apenas
+     * a renda como "Não alocado".
+     */
+    if (dados.valores.length === 0) {
+        mostrarGraficoVazio(
+            "Ainda não existem despesas ou metas neste mês.",
+        );
+        return;
+    }
+
+    /*
+     * O percentual pode passar de 100% quando as saídas
+     * excedem a renda registrada.
+     */
+    resumo.textContent =
+        `${dados.percentualAlocado.toFixed(1)}% da renda alocada`;
+
+    resumo.classList.remove("oculto");
+
+    const contexto = prepararCanvasGrafico();
+
+    /*
+     * Paleta suficiente para várias categorias.
+     * O último cinza é reservado para "Não alocado".
+     */
+    const paleta = [
+        "#6366f1",
+        "#22c55e",
+        "#f59e0b",
+        "#ef4444",
+        "#06b6d4",
+        "#a855f7",
+        "#ec4899",
+        "#84cc16",
+        "#14b8a6",
+        "#f97316",
+        "#64748b",
+    ];
+
+    const cores =
+        dados.labels.map((rotulo, indice) => {
+            if (rotulo === "Não alocado") {
+                return "#374151";
+            }
+
+            return paleta[
+                indice % paleta.length
+            ];
+        });
+
+    graficoFinanceiro = new Chart(contexto, {
+        type: "doughnut",
+
+        data: {
+            labels: dados.labels,
+
+            datasets: [
+                {
+                    label: "Alocação",
+                    data: dados.valores,
+                    backgroundColor: cores,
+                    borderColor: "#202126",
+                    borderWidth: 3,
+                    hoverOffset: 10,
+                },
+            ],
+        },
+
+        plugins: [
+            pluginTextoCentralDoughnut,
+        ],
+
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+
+            /*
+             * Controla o tamanho do espaço vazio no centro.
+             */
+            cutout: "62%",
+
+            layout: {
+                padding: 8,
+            },
+
+            plugins: {
+                textoCentralDoughnut: {
+                    rotulo: "Renda do mês",
+                    valor: dados.totalReceitas,
+                },
+
+                legend: {
+                    position: "right",
+
+                    labels: {
+                        color: "#f3f4f6",
+                        usePointStyle: true,
+                        pointStyle: "circle",
+                        padding: 16,
+                        boxWidth: 10,
+                    },
+                },
+
+                tooltip: {
+                    backgroundColor: "#17171a",
+                    borderColor: "#374151",
+                    borderWidth: 1,
+                    titleColor: "#f3f4f6",
+                    bodyColor: "#f3f4f6",
+                    padding: 12,
+
+                    callbacks: {
+                        label(contextoTooltip) {
+                            const rotulo =
+                                contextoTooltip.label;
+
+                            const valor =
+                                contextoTooltip.parsed;
+
+                            /*
+                             * A porcentagem é calculada contra
+                             * a renda total, não contra o total
+                             * das fatias.
+                             */
+                            const percentualDaRenda =
+                                dados.totalReceitas > 0
+                                    ? (
+                                        valor /
+                                        dados.totalReceitas
+                                    ) * 100
+                                    : 0;
+
+                            return (
+                                `${rotulo}: ` +
+                                `${formatarMoeda(valor)} ` +
+                                `(${percentualDaRenda.toFixed(1)}% da renda)`
+                            );
+                        },
+
+                        afterBody() {
+                            if (dados.valorExcedente <= 0) {
+                                return [];
+                            }
+
+                            return [
+                                "",
+                                `Saídas acima da renda: ${formatarMoeda(dados.valorExcedente)}`,
+                            ];
+                        },
+                    },
+                },
+            },
+        },
+    });
+}
+/* =========================================================
+   CONTROLE ENTRE OS DOIS GRÁFICOS
+   ========================================================= */
+
+/**
+ * Atualiza o estado visual dos botões.
+ */
+function atualizarBotoesModoGrafico() {
+    const botoes =
+        document.querySelectorAll(
+            "[data-chart-mode]",
+        );
+
+    for (const botao of botoes) {
+        const estaAtivo =
+            botao.dataset.chartMode ===
+            modoGraficoAtual;
+
+        botao.classList.toggle(
+            "ativo",
+            estaAtivo,
+        );
+
+        botao.setAttribute(
+            "aria-selected",
+            String(estaAtivo),
+        );
+    }
+}
+
+
+/**
+ * Desenha o gráfico correspondente à aba atual.
+ */
+function renderizarModoGraficoAtual() {
+    const {
+        historico,
+        ano,
+        indiceMes,
+    } = contextoGraficoAtual;
+
+    if (modoGraficoAtual === "alocacao") {
+        renderizarGraficoAlocacao(
+            historico,
+        );
+        return;
+    }
+
+    renderizarGraficoFluxo(
+        historico,
+        ano,
+        indiceMes,
+    );
+}
+
+
+/**
+ * Remove o gráfico atual e exibe uma mensagem.
+ */
+function mostrarGraficoVazio(mensagem) {
+    const canvas =
+        obterElemento("grafico-financeiro");
+
+    const estadoVazio =
+        obterElemento("grafico-vazio");
+
+    /*
+     * Destrói a instância anterior para liberar o canvas.
+     */
+    if (graficoFinanceiro) {
+        graficoFinanceiro.destroy();
+        graficoFinanceiro = null;
+    }
+
+    canvas.hidden = true;
+
+    const paragrafo =
+        estadoVazio.querySelector("p");
+
+    if (paragrafo) {
+        paragrafo.textContent = mensagem;
+    }
+
+    estadoVazio.classList.remove("oculto");
+}
+
+
+/**
+ * Cria ou recria o gráfico financeiro.
+ *
+ * O gráfico mistura:
+ * - barras verdes para receitas;
+ * - barras vermelhas para despesas;
+ * - linha roxa para resultado acumulado.
+ */
+function renderizarGraficoFinanceiro(
+    historico,
+    ano,
+    indiceMes,
+) {
+    contextoGraficoAtual = {
+        historico:
+            Array.isArray(historico)
+                ? historico
+                : [],
+        ano,
+        indiceMes,
+    };
+
+    renderizarModoGraficoAtual();
+}
+
+function configurarSeletorGraficos() {
+    const botoes =
+        document.querySelectorAll(
+            "[data-chart-mode]",
+        );
+
+    for (const botao of botoes) {
+        botao.addEventListener(
+            "click",
+            () => {
+                const novoModo =
+                    botao.dataset.chartMode;
+
+                if (
+                    novoModo !== "fluxo" &&
+                    novoModo !== "alocacao"
+                ) {
+                    return;
+                }
+
+                if (
+                    novoModo ===
+                    modoGraficoAtual
+                ) {
+                    return;
+                }
+
+                modoGraficoAtual = novoModo;
+
+                atualizarBotoesModoGrafico();
+                renderizarModoGraficoAtual();
+            },
+        );
+    }
+
+    atualizarBotoesModoGrafico();
+}
+
+
 
 async function carregarDashboard() {
     const dataAtual = new Date();
@@ -947,8 +1865,20 @@ async function carregarDashboard() {
             historico,
             "receita",
         );
+        /*
+ * Atualiza o gráfico usando as mesmas movimentações
+ * que já foram carregadas para o dashboard.
+ */
+        renderizarGraficoFinanceiro(
+            historico,
+            anoAtual,
+            mesAtual,
+        );
     } catch (erro) {
         mostrarErroNoDashboard(erro);
+        mostrarGraficoVazio(
+        "Não foi possível carregar os dados do gráfico.",
+    );
     }
 }
 
@@ -956,6 +1886,8 @@ document.addEventListener("DOMContentLoaded", () => {
     configurarPopovers();
     configurarModalTransacao();
     configurarGerenciadorCategorias();
+    configurarSeletorGraficos();
+    
     carregarCategoriasParaModal();
     carregarDashboard();
 
