@@ -1,0 +1,387 @@
+/* Variáveis de Cores (Paleta Dark Mode) */
+:root {
+    --bg-fundo: #17171a; /* Fundo mais escuro */
+    --bg-card: #222329; /* Fundo dos cartões (um pouco mais claro) */
+    --texto-principal: #f3f4f6;
+    --texto-secundario: #9ca3af;
+    --cor-destaque: #6366f1; /* Roxo moderno */
+    --cor-receita: #10b981; /* Verde esmeralda */
+    --cor-despesa: #ef4444; /* Vermelho rubi */
+    --cor-meta: #f59e0b; /* Amarelo Dourado */
+    --borda: #374151;
+}
+
+/* Reset básico */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Inter', sans-serif;
+}
+
+body {
+    background-color: var(--bg-fundo);
+    color: var(--texto-principal);
+    display: flex;
+    height: 100vh;
+    overflow: hidden;
+}
+
+.app-container {
+    display: flex;
+    width: 100%;
+}
+
+/* --- SIDEBAR --- */
+.sidebar {
+    width: 260px;
+    background-color: var(--bg-card);
+    border-right: 1px solid var(--borda);
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+}
+
+.logo h2 {
+    font-size: 24px;
+    margin-bottom: 40px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.sidebar nav {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.sidebar nav a {
+    text-decoration: none;
+    color: var(--texto-secundario);
+    font-size: 16px;
+    padding: 12px 16px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    transition: all 0.3s ease;
+}
+
+.sidebar nav a:hover {
+    background-color: rgba(99, 102, 241, 0.1);
+    color: var(--cor-destaque);
+}
+
+.sidebar nav a.active {
+    background-color: var(--cor-destaque);
+    color: white;
+}
+
+/* --- ÁREA PRINCIPAL --- */
+.content {
+    flex: 1;
+    padding: 40px;
+    overflow-y: auto;
+}
+
+header h1 {
+    font-size: 28px;
+}
+
+header .subtitle {
+    color: var(--texto-secundario);
+    margin-top: 4px;
+    margin-bottom: 32px;
+}
+
+/* --- CARTÕES (DASHBOARD) --- */
+/* --- CABEÇALHO DO MÊS --- */
+.mes-header {
+    text-align: center;
+    margin-bottom: 32px;
+}
+
+.mes-header h1 {
+    font-size: 32px;
+    color: var(--cor-destaque);
+    font-weight: 700;
+}
+
+/* --- NOVO CARTÃO CENTRAL DE SALDO --- */
+.dashboard-highlight {
+    display: flex;
+    justify-content: center; /* Centraliza o cartão na tela */
+    margin-bottom: 40px;
+}
+
+.main-balance-card {
+    background-color: var(--bg-card);
+    width: 100%;
+    max-width: 550px; /* Tamanho máximo do cartão */
+    border-radius: 24px;
+    padding: 40px;
+    border: 1px solid var(--borda);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.balance-top {
+    text-align: center;
+    margin-bottom: 32px;
+}
+
+.balance-top h3 {
+    font-size: 16px;
+    color: var(--texto-secundario);
+    font-weight: 500;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.balance-top h2 {
+    font-size: 56px; /* Saldo gigante */
+    font-weight: 700;
+    color: var(--texto-principal);
+}
+
+.balance-bottom {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    padding-top: 24px;
+    border-top: 1px solid var(--borda); /* Linha divisória */
+}
+
+.sub-info {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.sub-info .icon-box {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+}
+
+/* Estilos específicos de Despesa (Esquerda) */
+.despesa-info .icon-box { background-color: rgba(239, 68, 68, 0.15); color: var(--cor-despesa); }
+.despesa-info h4 { color: var(--texto-secundario); font-size: 14px; font-weight: 500; }
+.despesa-info p { color: var(--cor-despesa); font-size: 24px; font-weight: 600; }
+
+/* Estilos específicos de Receita (Direita) */
+.receita-info .icon-box { background-color: rgba(16, 185, 129, 0.15); color: var(--cor-receita); }
+.receita-info h4 { color: var(--texto-secundario); font-size: 14px; font-weight: 500; }
+.receita-info p { color: var(--cor-receita); font-size: 24px; font-weight: 600; text-align: right; }
+.receita-info { flex-direction: row-reverse; text-align: right; } /* Inverte a ordem do ícone para ficar simétrico */
+
+/* Cores específicas dos ícones */
+.card-icon.receita { background-color: rgba(16, 185, 129, 0.15); color: var(--cor-receita); }
+.card-icon.despesa { background-color: rgba(239, 68, 68, 0.15); color: var(--cor-despesa); }
+.transaction-icon.meta { background-color: rgba(245, 158, 11, 0.15); color: var(--cor-meta); }
+.transaction-value.neutro { color: var(--cor-meta); }
+.card-icon.saldo { background-color: rgba(99, 102, 241, 0.15); color: var(--cor-destaque); }
+
+.card-info h3 {
+    font-size: 14px;
+    color: var(--texto-secundario);
+    font-weight: 500;
+}
+
+.card-info p {
+    font-size: 28px;
+    font-weight: 700;
+    margin-top: 4px;
+}
+
+/* --- PLACEHOLDER DO GRÁFICO --- */
+.chart-section h2 {
+    margin-bottom: 16px;
+    font-size: 20px;
+}
+
+.chart-placeholder {
+    background-color: var(--bg-card);
+    border: 1px dashed var(--borda);
+    border-radius: 16px;
+    height: 300px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: var(--texto-secundario);
+    gap: 12px;
+    font-size: 16px;
+}
+
+.chart-placeholder i {
+    font-size: 40px;
+    color: var(--borda);
+}
+
+/* --- LISTA DE TRANSAÇÕES RECENTES --- */
+.recent-transactions {
+    background-color: var(--bg-card);
+    border-radius: 24px;
+    padding: 32px;
+    border: 1px solid var(--borda);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    margin-bottom: 40px;
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+}
+
+.section-header h2 {
+    font-size: 20px;
+    font-weight: 600;
+}
+
+.view-all {
+    color: var(--cor-destaque);
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.view-all:hover {
+    text-decoration: underline;
+}
+
+.transactions-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.transaction-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px;
+    background-color: rgba(255, 255, 255, 0.02);
+    border-radius: 12px;
+    transition: background-color 0.2s ease;
+}
+
+.transaction-item:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+.transaction-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.transaction-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+}
+
+/* Reutilizando as cores das bolinhas */
+.transaction-icon.receita { background-color: rgba(16, 185, 129, 0.15); color: var(--cor-receita); }
+.transaction-icon.despesa { background-color: rgba(239, 68, 68, 0.15); color: var(--cor-despesa); }
+
+.transaction-details h4 {
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--texto-principal);
+}
+
+.transaction-details p {
+    font-size: 13px;
+    color: var(--texto-secundario);
+    margin-top: 4px;
+}
+
+.transaction-value {
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.transaction-value.positivo { color: var(--cor-receita); }
+.transaction-value.negativo { color: var(--cor-despesa); }
+
+.empty-state {
+    text-align: center;
+    padding: 32px;
+    color: var(--texto-secundario);
+    font-size: 14px;
+}
+
+/* --- ESTILOS DOS MENUS SUSPENSOS (POPOVERS) --- */
+.clicavel {
+    cursor: pointer;
+    position: relative; /* Isso prende o menu flutuante exatamente embaixo do botão */
+    transition: opacity 0.2s;
+}
+
+.clicavel:hover {
+    opacity: 0.8;
+}
+
+.popover-menu {
+    position: absolute;
+    top: 110%; /* Fica um pouquinho abaixo da palavra Despesa/Receita */
+    left: 0;
+    width: 250px;
+    background-color: var(--bg-fundo);
+    border: 1px solid var(--borda);
+    border-radius: 12px;
+    padding: 16px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+    z-index: 100; /* Garante que fique por cima de tudo na tela */
+    text-align: left;
+}
+
+/* Oculta o menu por padrão */
+.popover-menu.oculto {
+    display: none; 
+}
+
+.popover-menu h5 {
+    font-size: 12px;
+    color: var(--texto-secundario);
+    text-transform: uppercase;
+    margin-bottom: 12px;
+    border-bottom: 1px solid var(--borda);
+    padding-bottom: 8px;
+}
+
+.popover-menu ul {
+    list-style: none;
+    margin-bottom: 12px;
+}
+
+.popover-menu ul li {
+    font-size: 14px;
+    padding: 6px 0;
+    display: flex;
+    justify-content: space-between;
+}
+
+.popover-menu a {
+    font-size: 12px;
+    color: var(--cor-destaque);
+    text-decoration: none;
+    display: block;
+    text-align: center;
+}

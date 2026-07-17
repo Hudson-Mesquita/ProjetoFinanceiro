@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FinDash</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- Fonte moderna (Inter) -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Ícones (FontAwesome) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="app-container">
+        
+        <!-- Menu Lateral -->
+        <aside class="sidebar">
+            <div class="logo">
+                <h2><i class="fa-solid fa-wallet" style="color: #6366f1;"></i> FinDash</h2>
+            </div>
+            <nav>
+                <a href="#" class="active"><i class="fa-solid fa-chart-pie"></i> Dashboard</a>
+                <a href="#"><i class="fa-solid fa-list-ul"></i> Transações</a>
+                <a href="#"><i class="fa-solid fa-bullseye"></i> Metas</a>
+            </nav>
+        </aside>
+
+        <!-- Área Principal -->
+        <main class="content">
+            <header class="mes-header">
+                <!-- Usaremos o JS no futuro para mudar esse texto automaticamente -->
+                <h1 id="titulo-mes">Julho - 2026</h1> 
+            </header>
+
+            <!-- NOVO: Cartão Central de Saldo -->
+            <section class="dashboard-highlight">
+                <div class="main-balance-card">
+                    
+                    <div class="balance-top">
+                        <h3>Saldo Total</h3>
+                        <h2 id="valor-saldo">R$ 0,00</h2>
+                    </div>
+
+                   <div class="balance-bottom">
+                        <!-- Despesas na Esquerda -->
+                        <div class="sub-info despesa-info clicavel" id="btn-despesas">
+                            <div class="icon-box"><i class="fa-solid fa-arrow-trend-down"></i></div>
+                            <div>
+                                <h4>Despesas</h4>
+                                <p id="valor-despesas">R$ 0,00</p>
+                            </div>
+                            
+                            <!-- O Menu Suspenso Invisível -->
+                            <div class="popover-menu oculto" id="popover-despesas">
+                                <h5>Últimas Despesas</h5>
+                                <ul id="lista-mini-despesas">
+                                    <!-- JS vai injetar aqui -->
+                                </ul>
+                                <a href="#">Ver histórico completo</a>
+                            </div>
+                        </div>
+
+                        <!-- Receitas na Direita -->
+                        <div class="sub-info receita-info clicavel" id="btn-receitas">
+                            <div class="icon-box"><i class="fa-solid fa-arrow-trend-up"></i></div>
+                            <div>
+                                <h4>Receitas</h4>
+                                <p id="valor-receitas">R$ 0,00</p>
+                            </div>
+                            
+                            <!-- O Menu Suspenso Invisível -->
+                            <div class="popover-menu oculto" id="popover-receitas">
+                                <h5>Últimas Receitas</h5>
+                                <ul id="lista-mini-receitas">
+                                    <!-- JS vai injetar aqui -->
+                                </ul>
+                                <a href="#">Ver histórico completo</a>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </section>
+            <!-- NOVO: Tabela de Últimas Transações -->
+            <section class="recent-transactions">
+                <div class="section-header">
+                    <h2>Últimas Movimentações</h2>
+                    <a href="#" class="view-all">Ver tudo</a>
+                </div>
+                
+                <div class="transactions-list" id="lista-transacoes">
+                    <!-- O JavaScript vai injetar as transações aqui -->
+                    <div class="empty-state">
+                        <p>Buscando transações...</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Espaço reservado para o futuro Gráfico (Mantido) -->
+            <section class="chart-section">
+                <h2>Análise Financeira</h2>
+                <div class="chart-placeholder">
+                    <i class="fa-solid fa-chart-line"></i>
+                    <p>O gráfico interativo entrará aqui em breve...</p>
+                </div>
+            </section>
+        </main>
+    
+    <!-- script que fará a mágica no futuro -->
+    <script src="app.js"></script>
+</body>
+</html>

@@ -23,37 +23,49 @@ def criar_transacao(transacao: TransacaoCreate):
         'valor': transacao.valor,
         'tipo': transacao.tipo,
         'data': transacao.data,
-        'descricao': transacao.descricao,}
+        'descricao': transacao.descricao,
+    }
 
 
+# Juntamos as duas funções em uma só, limpa e funcional
 @router.get("/transacoes")
-def listar_transacoes():
+def listar_transacoes(mes: Optional[str] = None, ano: Optional[str] = None):
     conexao = bancodedados.criar_conexao()
     cursor = conexao.cursor()
 
-    query = '''
-        SELECT t.id, t.descricao, t.valor, t.tipo, t.data, c.nome
+    # O LEFT JOIN traz a transação mesmo que não tenha categoria.
+    query = """
+        SELECT t.id, t.descricao, t.valor, t.tipo, t.data, c.nome AS categoria_nome, t.meta_id
         FROM transacoes t
-        JOIN categorias c ON t.categoria_id = c.id
-    '''
-    cursor.execute(query)
+        LEFT JOIN categorias c ON t.categoria_id = c.id
+        WHERE 1=1
+    """
+
+    parametros = []
+
+    if mes and ano:
+        query += " AND t.data LIKE ?"
+        parametros.append(f"{ano}-{mes}-%")
+
+    cursor.execute(query, parametros)
     linhas = cursor.fetchall()
     conexao.close()
 
-    extrato = []
+    resultado = []
     for linha in linhas:
-        # Como usei row_factory no bancodedados, as colunas podem ser acessadas pelo nome, pois são consideradas dicionários
         transacao_formatada = {
             "id": linha["id"],
             "descricao": linha["descricao"],
             "valor": linha["valor"],
             "tipo": linha["tipo"],
             "data": linha["data"],
-            "categoria": linha["nome"]
+            # Se não tiver categoria (for null), chamamos de "Reserva/Meta" para não dar erro
+            "categoria": linha["categoria_nome"] or "Reserva/Meta",
+            "meta_id": linha["meta_id"]
         }
-        extrato.append(transacao_formatada)
+        resultado.append(transacao_formatada)
 
-    return {"historico": extrato}
+    return {"historico": resultado}
 
 
 @router.put("/transacoes/{transacao_id}")
@@ -61,11 +73,11 @@ def atualizar_transacao(transacao_id: int, transacao: TransacaoCreate):
     conexao = bancodedados.criar_conexao()
     cursor = conexao.cursor()
 
-    #atualiza apenas os campos da linha específica
+    # Atualiza a linha específica, agora incluindo o meta_id também
     query = """
     UPDATE transacoes
-    SET descricao = ?, valor = ?, tipo = ?, data = ?, categoria_id = ?
-    where id = ?
+    SET descricao = ?, valor = ?, tipo = ?, data = ?, categoria_id = ?, meta_id = ?
+    WHERE id = ?
     """
 
     cursor.execute(query, (
@@ -74,6 +86,7 @@ def atualizar_transacao(transacao_id: int, transacao: TransacaoCreate):
         transacao.tipo,
         transacao.data,
         transacao.categoria_id,
+        transacao.meta_id,
         transacao_id
     ))
 
@@ -92,54 +105,14 @@ def deletar_transacao(transacao_id: int):
     conexao = bancodedados.criar_conexao()
     cursor = conexao.cursor()
 
-
-    #executa o comando de deleção do ID
+    # Executa o comando de deleção do ID
     cursor.execute("""DELETE FROM transacoes WHERE id = ?""", (transacao_id,))
     conexao.commit()
 
-
-    #mostrar linhas apagadas
+    # Mostrar linhas apagadas
     linhas_apagadas = cursor.rowcount
     conexao.close()
 
     if linhas_apagadas == 0:
         return {"error": 'nenhuma linha apagada/não encontrada'}
-    return{"msg": f'transação {transacao_id} apagada.'}
-
-
-@router.get("/transacoes")
-def listar_transacoes(mes: Optional[str] = None, ano: Optional[str] = None):
-    conexao = bancodedados.criar_conexao()
-    cursor = conexao.cursor()
-
-    #inicio base query, uso o 1=1 para facilitar a adição de vários filtros dinâmicos com 'AND'
-    query = """SELECT t.id, t.descricao, t.valor, t.tipo, t.data, c.nome
-    FROM transacoes t
-    JOIN categorias c ON t.categoria_id = c.id
-    WHERE 1=1"""
-
-    parametros = []
-
-    if mes and ano:
-        query += f" AND t.ano = {ano}"
-        #SQLite guarda a data em formato date, portanto, preciso colocar ano-mes-dia, o % significa qualquer dia,
-        parametros.append(f"{ano}-{mes}-%")
-
-    cursor.execute(query, parametros)
-    linhas = cursor.fetchall()
-    conexao.close()
-
-
-    resultado = []
-    for linha in linhas:
-        transacao_formatada = {
-            "id": linha["id"],
-            "descricao": linha["descricao"],
-            "valor": linha["valor"],
-            "tipo": linha["tipo"],
-            "data": linha["data"],
-            "categoria": linha["nome"]
-        }
-        resultado.append(transacao_formatada)
-
-    return {"historico": resultado}
+    return {"msg": f'transação {transacao_id} apagada.'}
