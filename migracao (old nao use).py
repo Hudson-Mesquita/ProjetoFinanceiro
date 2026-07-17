@@ -1,6 +1,6 @@
 import sqlite3
 
-conexao = sqlite3.connect('findash.db')
+conexao = sqlite3.connect('FinDash.db')
 cursor = conexao.cursor()
 
 try:

@@ -1,5 +1,7 @@
-from pydantic import BaseModel
-from typing import Optional
+from pydantic import BaseModel, Field
+from typing import Optional, Literal
+from decimal import Decimal
+
 
 class CategoriaCreate(BaseModel):
     nome: str
@@ -7,7 +9,7 @@ class CategoriaCreate(BaseModel):
 
 class TransacaoCreate(BaseModel):
     descricao: str
-    valor: float
+    valor: Decimal = Field(gt=0)
     tipo: str
     data: str
     categoria_id: int

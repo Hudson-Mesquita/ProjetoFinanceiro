@@ -1,10 +1,19 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from uvicorn import lifespan
+from contextlib import asynccontextmanager
+
 from rotas import categorias, transacoes, dashboard, metas
+from bancodedados import iniciar_banco
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    iniciar_banco()
+    yield
 
 
 # Inicializa API
-app = FastAPI(title="FinDash API")
+app = FastAPI(title="FinDash API", lifespan=lifespan)
 
 app.add_middleware(CORSMiddleware,
                    allow_origins=['*'],# na fase dev, liberamos para qualquer orrigem

@@ -2,6 +2,7 @@ from fastapi import APIRouter
 import bancodedados
 from schemas import TransacaoCreate
 from typing import Optional
+from fastapi import HTTPException
 
 router = APIRouter()
 
@@ -17,6 +18,8 @@ def criar_transacao(transacao: TransacaoCreate):
     conexao.commit()
     novo_id = cursor.lastrowid
     cursor.close()
+    conexao.close()
+
     return {
         'mensagem': 'transacao criada com sucesso',
         'id': novo_id,
@@ -95,7 +98,7 @@ def atualizar_transacao(transacao_id: int, transacao: TransacaoCreate):
     conexao.close()
 
     if linhas_modificadas == 0:
-        return {'error': 'Transação não encontrada.'}
+        raise HTTPException(status_code=404, detail= 'Transação não encontrada.' )
 
     return {'msg': f"Transação {transacao_id} atualizada."}
 

@@ -27,6 +27,7 @@ def criar_categoria(categoria: CategoriaCreate):
 
     novo_id = cursor.lastrowid
     cursor.close()
+    conexao.close()
 
     return {
         'mensagem': 'categoria criada com sucesso',
