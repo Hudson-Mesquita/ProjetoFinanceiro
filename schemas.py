@@ -9,7 +9,7 @@ class CategoriaCreate(BaseModel):
 
 class TransacaoCreate(BaseModel):
     descricao: str
-    valor: Decimal = Field(gt=0)
+    valor: float
     tipo: str
     data: str
     categoria_id: int

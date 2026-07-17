@@ -385,3 +385,220 @@ header .subtitle {
     display: block;
     text-align: center;
 }
+/* --- BOTÕES --- */
+.btn-primary {
+    background-color: var(--cor-destaque);
+    color: white;
+    border: none;
+    padding: 12px 20px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn-primary:hover {
+    background-color: #4f46e5; /* Roxo um pouco mais escuro */
+}
+
+.btn-primary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.btn-secondary {
+    background-color: transparent;
+    color: var(--texto-secundario);
+    border: 1px solid var(--borda);
+    padding: 12px 20px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-secondary:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+    color: var(--texto-principal);
+}
+
+/* --- MODAL (A PORTA DE ENTRADA) --- */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0, 0, 0, 0.6); /* Fundo escurecido */
+    backdrop-filter: blur(4px); /* Efeito de vidro moderno */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    opacity: 1;
+    transition: opacity 0.3s ease;
+}
+
+.modal-overlay.oculto {
+    opacity: 0;
+    pointer-events: none; /* Impede cliques quando estiver invisível */
+}
+
+.modal-content {
+    background-color: var(--bg-card);
+    width: 100%;
+    max-width: 500px;
+    border-radius: 16px;
+    padding: 32px;
+    border: 1px solid var(--borda);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+    transform: translateY(0);
+    transition: transform 0.3s ease;
+}
+
+.modal-overlay.oculto .modal-content {
+    transform: translateY(-20px); /* Animação de subida ao fechar */
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+}
+
+.modal-header h2 {
+    font-size: 20px;
+}
+
+.btn-close {
+    background: none;
+    border: none;
+    color: var(--texto-secundario);
+    font-size: 20px;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.btn-close:hover {
+    color: var(--texto-principal);
+}
+
+/* --- FORMULÁRIOS --- */
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 16px;
+    flex: 1;
+}
+
+.form-row {
+    display: flex;
+    gap: 16px;
+}
+
+form label {
+    font-size: 14px;
+    color: var(--texto-secundario);
+    font-weight: 500;
+}
+
+form input, form select {
+    background-color: var(--bg-fundo);
+    border: 1px solid var(--borda);
+    color: var(--texto-principal);
+    padding: 12px;
+    border-radius: 8px;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+form input:focus, form select:focus {
+    border-color: var(--cor-destaque);
+}
+
+/* Tira as setinhas chatas do input number */
+form input[type="number"]::-webkit-inner-spin-button, 
+form input[type="number"]::-webkit-outer-spin-button { 
+    -webkit-appearance: none; 
+    margin: 0; 
+}
+
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 32px;
+    padding-top: 24px;
+    border-top: 1px solid var(--borda);
+}
+/* --- GERENCIADOR DE CATEGORIAS --- */
+.categories-list-container {
+    max-height: 250px;
+    overflow-y: auto;
+    padding-right: 8px; /* Espaço para a barra de rolagem */
+}
+
+/* Customizando a barra de rolagem para ficar fina e sombria */
+.categories-list-container::-webkit-scrollbar {
+    width: 6px;
+}
+.categories-list-container::-webkit-scrollbar-track {
+    background: transparent;
+}
+.categories-list-container::-webkit-scrollbar-thumb {
+    background-color: var(--borda);
+    border-radius: 10px;
+}
+
+#lista-gerenciador-categorias {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.category-list-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: rgba(255, 255, 255, 0.02);
+    padding: 12px 16px;
+    border-radius: 8px;
+    border: 1px solid transparent;
+    transition: all 0.2s;
+}
+
+.category-list-item:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+    border-color: var(--borda);
+}
+
+.category-list-item span {
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.category-actions {
+    display: flex;
+    gap: 12px;
+}
+
+.btn-icon {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+    color: var(--texto-secundario);
+    transition: color 0.2s;
+}
+
+.btn-icon.edit:hover { color: var(--cor-destaque); }
+.btn-icon.delete:hover { color: var(--cor-despesa); }
