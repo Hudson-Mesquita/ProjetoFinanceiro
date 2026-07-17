@@ -1,10 +1,10 @@
 from fastapi import APIRouter
 import bancodedados
-
+from typing import Optional
 router = APIRouter()
 
 @router.get("/dashboard/saldo")
-def obter_saldo():
+def obter_saldo(mes: Optional[str] = None, ano: Optional[str] = None):
     conexao = bancodedados.criar_conexao()
     cursor =  conexao.cursor()
 
@@ -12,11 +12,20 @@ def obter_saldo():
     query = '''SELECT
                     COALESCE (SUM(CASE WHEN tipo IN('receita', 'recebimento') THEN valor ELSE 0 END), 0) AS total_receitas,
                     COALESCE (SUM(CASE WHEN tipo = 'despesa' THEN valor ELSE 0 END), 0) AS total_despesas
-                FROM transacoes'''
+                FROM transacoes
+                WHERE 1=1
+                '''
 
-    cursor.execute(query)
+    parametros = []
+
+    if mes and ano:
+        query += " AND data LIKE ?"
+        parametros.append(f"{ano}-{mes}-%")
+
+    cursor.execute(query, parametros)
     resultado = cursor.fetchone()
     conexao.close()
+
     receitas = resultado['total_receitas']
     despesas = resultado['total_despesas']
     saldo = receitas - despesas
@@ -29,7 +38,7 @@ def obter_saldo():
 
 
 @router.get("/dashboard/alertas")
-def verificar_alertas():
+def verificar_alertas(mes: Optional[str] = None, ano: Optional[str] = None):
     conexao = bancodedados.criar_conexao()
     cursor = conexao.cursor()
 
@@ -41,10 +50,19 @@ def verificar_alertas():
                     COALESCE(SUM(t.valor), 0) AS total_gasto
                 FROM categorias c
                 LEFT JOIN transacoes t ON c.id = t.categoria_id AND t.tipo = 'despesa' 
+                '''
+
+    parametros = []
+
+    if mes and ano:
+        query += " AND t.data LIKE ?"
+        parametros.append(f"{ano}-{mes}-%")
+
+    query += '''
                 WHERE c.limite > 0
                 GROUP BY c.id, c.nome, c.limite
                 '''
-    cursor.execute(query)
+    cursor.execute(query, parametros)
     linhas = cursor.fetchall()
     conexao.close()
 

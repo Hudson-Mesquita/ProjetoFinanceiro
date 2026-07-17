@@ -28,7 +28,7 @@ def iniciar_banco():
     ''')
 
 
-# mesma coisa que acima, porém Veja que a última linha faz a "amarracão" (FOREIGN KEY) avisando que o categoria_id tem que existir na tabela categorias.
+# mesma coisa que acima, porém veja que a última linha faz a "amarracão" (FOREIGN KEY) avisando que o categoria_id tem que existir na tabela categorias.
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS transacoes(
             id INTEGER PRIMARY KEY AUTOINCREMENT,
