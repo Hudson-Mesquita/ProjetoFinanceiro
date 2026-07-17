@@ -32,29 +32,51 @@ def criar_transacao(transacao: TransacaoCreate):
 
 # Juntamos as duas funções em uma só, limpa e funcional
 @router.get("/transacoes")
-def listar_transacoes(mes: Optional[str] = None, ano: Optional[str] = None):
+def listar_transacoes(
+    mes: Optional[str] = None,
+    ano: Optional[str] = None
+):
     conexao = bancodedados.criar_conexao()
     cursor = conexao.cursor()
 
-    # O LEFT JOIN traz a transação mesmo que não tenha categoria.
+    # LEFT JOIN mantém a transação no resultado mesmo que ela
+    # não possua uma categoria associada.
     query = """
-        SELECT t.id, t.descricao, t.valor, t.tipo, t.data, c.nome AS categoria_nome, t.meta_id
+        SELECT
+            t.id,
+            t.descricao,
+            t.valor,
+            t.tipo,
+            t.data,
+            t.categoria_id,
+            c.nome AS categoria_nome,
+            t.meta_id
         FROM transacoes t
-        LEFT JOIN categorias c ON t.categoria_id = c.id
-        WHERE 1=1
+        LEFT JOIN categorias c
+            ON t.categoria_id = c.id
+        WHERE 1 = 1
     """
 
     parametros = []
 
+    # Adiciona o filtro somente quando mês e ano forem enviados.
     if mes and ano:
         query += " AND t.data LIKE ?"
         parametros.append(f"{ano}-{mes}-%")
 
+    # Deve ficar FORA do if.
+    # Assim, a ordenação também funciona quando a rota é chamada
+    # sem mês e ano.
+    query += " ORDER BY t.data DESC, t.id DESC"
+
     cursor.execute(query, parametros)
     linhas = cursor.fetchall()
+
+    cursor.close()
     conexao.close()
 
     resultado = []
+
     for linha in linhas:
         transacao_formatada = {
             "id": linha["id"],
@@ -62,14 +84,20 @@ def listar_transacoes(mes: Optional[str] = None, ano: Optional[str] = None):
             "valor": linha["valor"],
             "tipo": linha["tipo"],
             "data": linha["data"],
-            # Se não tiver categoria (for null), chamamos de "Reserva/Meta" para não dar erro
+
+            # O frontend precisa do ID para deixar a categoria
+            # correta selecionada ao abrir o modo de edição.
+            "categoria_id": linha["categoria_id"],
+
+            # Nome usado apenas para exibição.
             "categoria": linha["categoria_nome"] or "Reserva/Meta",
-            "meta_id": linha["meta_id"]
+
+            "meta_id": linha["meta_id"],
         }
+
         resultado.append(transacao_formatada)
 
     return {"historico": resultado}
-
 
 @router.put("/transacoes/{transacao_id}")
 def atualizar_transacao(transacao_id: int, transacao: TransacaoCreate):
@@ -117,5 +145,8 @@ def deletar_transacao(transacao_id: int):
     conexao.close()
 
     if linhas_apagadas == 0:
-        return {"error": 'nenhuma linha apagada/não encontrada'}
+        raise HTTPException(
+            status_code=404,
+            detail="Transação não encontrada.",
+        )
     return {"msg": f'transação {transacao_id} apagada.'}

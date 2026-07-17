@@ -602,3 +602,35 @@ form input[type="number"]::-webkit-outer-spin-button {
 
 .btn-icon.edit:hover { color: var(--cor-destaque); }
 .btn-icon.delete:hover { color: var(--cor-despesa); }
+
+/* --- AÇÕES DAS MOVIMENTAÇÕES --- */
+
+/* Agrupa valor e botões no lado direito da linha. */
+.transaction-right {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+}
+
+/* Agrupa os botões de editar e excluir. */
+.transaction-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+/* Cria uma área clicável confortável sem transformar
+   os ícones em botões visualmente pesados. */
+.transaction-actions .btn-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Fundo discreto ao passar o mouse. */
+.transaction-actions .btn-icon:hover {
+    background-color: rgba(255, 255, 255, 0.06);
+}
