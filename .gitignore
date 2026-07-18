@@ -1,5 +1,34 @@
-__pycache__/
-.idea/
-*.db
+# Ambientes virtuais
 .venv/
+venv/
+env/
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# IDEs
+.idea/
+.vscode/
+
+# Banco e dados locais
+FinDash.db
+*.db
+*.sqlite
+*.sqlite3
+
+# Variáveis locais
 .env
+.env.*
+
+# Empacotamento
+build/
+dist/
+*.spec
+
+# Sistema operacional
+.DS_Store
+Thumbs.db

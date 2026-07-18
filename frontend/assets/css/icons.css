@@ -1,0 +1,50 @@
+/*
+ * FinDash — ícones SVG locais
+ *
+ * As tags <i class="fa-..."> existentes são preservadas.
+ * O arquivo icons.js injeta um SVG dentro delas em tempo de execução.
+ */
+
+.local-icon-host {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    width: 1em;
+    height: 1em;
+
+    font-style: normal;
+    line-height: 1;
+    vertical-align: -0.125em;
+}
+
+.local-icon-host > svg {
+    display: block;
+
+    width: 1em;
+    height: 1em;
+
+    overflow: visible;
+
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.9;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.local-icon-host.fa-spin {
+    animation: localIconSpin 0.9s linear infinite;
+}
+
+@keyframes localIconSpin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .local-icon-host.fa-spin {
+        animation-duration: 1.8s;
+    }
+}
