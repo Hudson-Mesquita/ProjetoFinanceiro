@@ -7,6 +7,10 @@ const API_URL =
 let bancoDeMetas = [];
 let metaSelecionadaParaAporte = null;
 
+// Quando não é null, o modal principal está editando uma meta.
+let metaEmEdicaoId = null;
+let metaOriginalEmEdicao = null;
+
 
 // =========================================================
 // UTILITÁRIOS
@@ -463,6 +467,63 @@ function criarCartaoMeta(meta) {
         badge,
     );
 
+    const ferramentas =
+        criarElemento(
+            "div",
+            "goal-card-header-tools",
+        );
+
+    const acoesGerenciamento =
+        criarElemento(
+            "div",
+            "goal-management-actions",
+        );
+
+    const btnEditar =
+        criarElemento(
+            "button",
+            "goal-management-button edit",
+        );
+
+    btnEditar.type = "button";
+    btnEditar.title = "Editar meta";
+    btnEditar.setAttribute(
+        "aria-label",
+        `Editar meta ${meta.nome}`,
+    );
+    btnEditar.innerHTML =
+        '<i class="fa-solid fa-pen"></i>';
+
+    btnEditar.addEventListener(
+        "click",
+        () => abrirModalEditarMeta(meta),
+    );
+
+    const btnExcluir =
+        criarElemento(
+            "button",
+            "goal-management-button delete",
+        );
+
+    btnExcluir.type = "button";
+    btnExcluir.title = "Excluir meta";
+    btnExcluir.setAttribute(
+        "aria-label",
+        `Excluir meta ${meta.nome}`,
+    );
+    btnExcluir.innerHTML =
+        '<i class="fa-solid fa-trash"></i>';
+
+    btnExcluir.addEventListener(
+        "click",
+        () => excluirMeta(meta, btnExcluir),
+    );
+
+    acoesGerenciamento.append(
+        btnEditar,
+        btnExcluir,
+    );
+
     const icone =
         criarElemento(
             "div",
@@ -476,9 +537,14 @@ function criarCartaoMeta(meta) {
             ? '<i class="fa-solid fa-trophy"></i>'
             : '<i class="fa-solid fa-bullseye"></i>';
 
+    ferramentas.append(
+        acoesGerenciamento,
+        icone,
+    );
+
     cabecalho.append(
         blocoTitulo,
-        icone,
+        ferramentas,
     );
 
     // -----------------------------------------------------
@@ -741,6 +807,68 @@ function criarCartaoMeta(meta) {
 }
 
 
+/**
+ * Exclui somente a meta. O backend preserva as transações
+ * financeiras e remove apenas o vínculo meta_id.
+ */
+async function excluirMeta(
+    meta,
+    botao,
+) {
+    const possuiAportes =
+        meta.valor_poupado > 0;
+
+    const avisoAportes =
+        possuiAportes
+            ? "\n\nAs movimentações já registradas permanecerão no histórico financeiro, mas deixarão de pertencer a esta meta."
+            : "";
+
+    const confirmou =
+        window.confirm(
+            `Excluir a meta “${meta.nome}”?` +
+            avisoAportes +
+            "\n\nEsta ação não pode ser desfeita.",
+        );
+
+    if (!confirmou) {
+        return;
+    }
+
+    const conteudoOriginal =
+        botao.innerHTML;
+
+    botao.disabled = true;
+    botao.innerHTML =
+        '<i class="fa-solid fa-circle-notch fa-spin"></i>';
+
+    try {
+        const dados =
+            await buscarJson(
+                `${API_URL}/metas/${meta.id}`,
+                {
+                    method: "DELETE",
+                },
+            );
+
+        mostrarToast(
+            dados.mensagem ??
+            "Meta excluída com sucesso.",
+        );
+
+        await carregarMetas();
+    } catch (erro) {
+        mostrarToast(
+            erro.message,
+            "erro",
+        );
+    } finally {
+        botao.disabled = false;
+        botao.innerHTML =
+            conteudoOriginal;
+    }
+}
+
+
 function aplicarFiltrosDasMetas() {
     const busca =
         obterElemento(
@@ -988,7 +1116,7 @@ function atualizarVisualModoPlanejamento() {
 }
 
 
-function calcularPlanejamentoDaMeta() {
+function obterValorBaseDoPlanejamento() {
     const valorAlvo =
         normalizarNumero(
             obterElemento(
@@ -996,10 +1124,29 @@ function calcularPlanejamentoDaMeta() {
             ).value,
         );
 
+    if (!metaOriginalEmEdicao) {
+        return Math.max(
+            valorAlvo,
+            0,
+        );
+    }
+
+    return Math.max(
+        valorAlvo -
+        metaOriginalEmEdicao.valor_poupado,
+        0,
+    );
+}
+
+
+function calcularPlanejamentoDaMeta() {
+    const valorBase =
+        obterValorBaseDoPlanejamento();
+
     const modo =
         obterModoPlanejamento();
 
-    if (valorAlvo <= 0) {
+    if (valorBase <= 0) {
         return {
             valorMensal: 0,
             prazo: 0,
@@ -1026,13 +1173,13 @@ function calcularPlanejamentoDaMeta() {
         }
 
         const valorMensal =
-            valorAlvo / prazo;
+            valorBase / prazo;
 
         return {
             valorMensal,
             prazo,
             ultimaParcela:
-                valorAlvo -
+                valorBase -
                 valorMensal *
                 (prazo - 1),
         };
@@ -1055,12 +1202,12 @@ function calcularPlanejamentoDaMeta() {
 
     const prazo =
         Math.ceil(
-            valorAlvo /
+            valorBase /
             valorMensal,
         );
 
     const ultimaParcela =
-        valorAlvo -
+        valorBase -
         valorMensal *
         (prazo - 1);
 
@@ -1073,6 +1220,68 @@ function calcularPlanejamentoDaMeta() {
                 0,
             ),
     };
+}
+
+
+function atualizarAvisoEdicaoMeta() {
+    const aviso =
+        obterElemento(
+            "aviso-edicao-meta",
+        );
+
+    const texto =
+        obterElemento(
+            "texto-aviso-edicao-meta",
+        );
+
+    if (!metaOriginalEmEdicao) {
+        aviso.classList.add(
+            "oculto",
+        );
+        aviso.classList.remove(
+            "perigo",
+        );
+        texto.textContent = "";
+        return;
+    }
+
+    const valorAlvo =
+        normalizarNumero(
+            obterElemento(
+                "input-valor-alvo-meta",
+            ).value,
+        );
+
+    const poupado =
+        metaOriginalEmEdicao
+            .valor_poupado;
+
+    aviso.classList.remove(
+        "oculto",
+    );
+
+    if (valorAlvo <= poupado) {
+        aviso.classList.add(
+            "perigo",
+        );
+
+        texto.textContent =
+            `Já existem ${formatarMoeda(poupado)} reservados. ` +
+            "Com este novo valor-alvo, a meta será considerada concluída e o planejamento restante ficará zerado.";
+
+        return;
+    }
+
+    aviso.classList.remove(
+        "perigo",
+    );
+
+    const restante =
+        valorAlvo - poupado;
+
+    texto.textContent =
+        `O novo planejamento será calculado sobre ${formatarMoeda(restante)}, ` +
+        `pois ${formatarMoeda(poupado)} já estão reservados.`;
 }
 
 
@@ -1104,6 +1313,29 @@ function atualizarPreviewPlanejamento() {
         formatarMoeda(
             calculo.ultimaParcela,
         );
+
+    atualizarAvisoEdicaoMeta();
+}
+
+
+function prepararModalMetaParaCriacao() {
+    metaEmEdicaoId = null;
+    metaOriginalEmEdicao = null;
+
+    obterElemento(
+        "titulo-modal-meta",
+    ).textContent =
+        "Nova Meta";
+
+    obterElemento(
+        "subtitulo-modal-meta",
+    ).textContent =
+        "Defina o objetivo e como pretende alcançá-lo.";
+
+    obterElemento(
+        "btn-salvar-meta",
+    ).innerHTML =
+        '<i class="fa-solid fa-floppy-disk"></i> Criar Meta';
 }
 
 
@@ -1115,6 +1347,7 @@ function abrirModalNovaMeta() {
         obterElemento("form-meta");
 
     form.reset();
+    prepararModalMetaParaCriacao();
 
     const radioPrazo =
         form.querySelector(
@@ -1137,12 +1370,91 @@ function abrirModalNovaMeta() {
 }
 
 
+function abrirModalEditarMeta(meta) {
+    const modal =
+        obterElemento("modal-meta");
+
+    const form =
+        obterElemento("form-meta");
+
+    form.reset();
+
+    metaEmEdicaoId = meta.id;
+    metaOriginalEmEdicao = meta;
+
+    obterElemento(
+        "titulo-modal-meta",
+    ).textContent =
+        "Editar Meta";
+
+    obterElemento(
+        "subtitulo-modal-meta",
+    ).textContent =
+        "Altere o objetivo. O novo planejamento considera somente o valor que ainda falta.";
+
+    obterElemento(
+        "btn-salvar-meta",
+    ).innerHTML =
+        '<i class="fa-solid fa-floppy-disk"></i> Salvar Alterações';
+
+    obterElemento(
+        "input-nome-meta",
+    ).value =
+        meta.nome;
+
+    obterElemento(
+        "input-valor-alvo-meta",
+    ).value =
+        String(meta.valor_alvo);
+
+    const radioPrazo =
+        form.querySelector(
+            'input[value="prazo"]',
+        );
+
+    if (radioPrazo) {
+        radioPrazo.checked = true;
+    }
+
+    obterElemento(
+        "input-prazo-meta",
+    ).value =
+        String(
+            meta.prazo_meses > 0
+                ? meta.prazo_meses
+                : 1,
+        );
+
+    obterElemento(
+        "input-valor-mensal-meta",
+    ).value =
+        meta.valor_mensal_projetado > 0
+            ? String(
+                meta.valor_mensal_projetado,
+            )
+            : "";
+
+    atualizarVisualModoPlanejamento();
+
+    modal.classList.remove(
+        "oculto",
+    );
+
+    obterElemento(
+        "input-nome-meta",
+    ).focus();
+}
+
+
 function fecharModalNovaMeta() {
     obterElemento(
         "modal-meta",
     ).classList.add(
         "oculto",
     );
+
+    metaEmEdicaoId = null;
+    metaOriginalEmEdicao = null;
 }
 
 
@@ -1150,6 +1462,9 @@ async function salvarNovaMeta(
     evento,
 ) {
     evento.preventDefault();
+
+    const estaEditando =
+        metaEmEdicaoId !== null;
 
     const botao =
         obterElemento(
@@ -1161,7 +1476,9 @@ async function salvarNovaMeta(
 
     botao.disabled = true;
     botao.innerHTML =
-        '<i class="fa-solid fa-circle-notch fa-spin"></i> Criando...';
+        estaEditando
+            ? '<i class="fa-solid fa-circle-notch fa-spin"></i> Salvando...'
+            : '<i class="fa-solid fa-circle-notch fa-spin"></i> Criando...';
 
     try {
         const nome =
@@ -1237,27 +1554,48 @@ async function salvarNovaMeta(
                 valorMensal;
         }
 
-        await buscarJson(
-            `${API_URL}/metas`,
-            {
-                method: "POST",
+        const endpoint =
+            estaEditando
+                ? `${API_URL}/metas/${metaEmEdicaoId}`
+                : `${API_URL}/metas`;
 
-                headers: {
-                    "Content-Type":
-                        "application/json",
+        const metodo =
+            estaEditando
+                ? "PUT"
+                : "POST";
+
+        const dados =
+            await buscarJson(
+                endpoint,
+                {
+                    method: metodo,
+
+                    headers: {
+                        "Content-Type":
+                            "application/json",
+                    },
+
+                    body:
+                        JSON.stringify(
+                            payload,
+                        ),
                 },
-
-                body:
-                    JSON.stringify(
-                        payload,
-                    ),
-            },
-        );
+            );
 
         fecharModalNovaMeta();
 
+        const mensagemBase =
+            dados.mensagem ??
+            (
+                estaEditando
+                    ? "Meta atualizada com sucesso."
+                    : "Meta criada com sucesso."
+            );
+
         mostrarToast(
-            "Meta criada com sucesso.",
+            dados.aviso
+                ? `${mensagemBase} ${dados.aviso}`
+                : mensagemBase,
         );
 
         await carregarMetas();

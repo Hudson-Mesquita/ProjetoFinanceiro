@@ -162,8 +162,8 @@
 
             <div class="modal-header">
                 <div>
-                    <h2>Nova Meta</h2>
-                    <p class="modal-subtitle">
+                    <h2 id="titulo-modal-meta">Nova Meta</h2>
+                    <p id="subtitulo-modal-meta" class="modal-subtitle">
                         Defina o objetivo e como pretende alcançá-lo.
                     </p>
                 </div>
@@ -203,6 +203,11 @@
                         step="0.01"
                         placeholder="0,00"
                         required>
+                </div>
+
+                <div id="aviso-edicao-meta" class="goal-edit-warning oculto">
+                    <i class="fa-solid fa-circle-info"></i>
+                    <p id="texto-aviso-edicao-meta"></p>
                 </div>
 
                 <fieldset class="goal-plan-fieldset">
