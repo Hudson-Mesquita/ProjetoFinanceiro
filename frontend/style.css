@@ -1015,3 +1015,120 @@ form input[type="number"]::-webkit-outer-spin-button {
         transition: none;
     }
 }
+/* =========================================================
+   TELA DE TRANSAÇÕES (TABELA E FILTROS)
+   ========================================================= */
+
+.filters-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+    background-color: var(--bg-card);
+    padding: 20px 24px;
+    border-radius: 16px;
+    border: 1px solid var(--borda);
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+}
+
+/* 1. Corrigindo o texto da barra de pesquisa */
+.search-box input {
+    width: 100%;
+    padding: 12px 12px 12px 40px; /* Dá mais respiro interno */
+    background-color: var(--bg-fundo);
+    border: 1px solid var(--borda);
+    color: var(--texto-principal); /* <-- A mágica da cor clara aqui */
+    border-radius: 8px;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.search-box input:focus {
+    border-color: var(--cor-destaque);
+}
+
+/* 2. Estilizando os menus suspensos (Filtros) */
+.filter-group select {
+    background-color: var(--bg-fundo);
+    color: var(--texto-principal);
+    border: 1px solid var(--borda);
+    padding: 12px 16px;
+    border-radius: 8px;
+    font-size: 14px;
+    outline: none;
+    cursor: pointer;
+    transition: border-color 0.2s;
+}
+
+.filter-group select:focus {
+    border-color: var(--cor-destaque);
+}
+
+.table-container {
+    background-color: var(--bg-card);
+    border-radius: 16px;
+    border: 1px solid var(--borda);
+    overflow: hidden; /* Mantém as bordas arredondadas na tabela */
+    overflow-x: auto; /* Rolagem horizontal em telas pequenas */
+}
+
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+}
+
+.data-table th {
+    background-color: rgba(255, 255, 255, 0.02);
+    padding: 16px 24px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--texto-secundario);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 1px solid var(--borda);
+}
+
+.data-table td {
+    padding: 16px 24px;
+    font-size: 14px;
+    border-bottom: 1px solid var(--borda);
+    vertical-align: middle;
+}
+
+.data-table tbody tr {
+    transition: background-color 0.2s;
+}
+
+.data-table tbody tr:hover {
+    background-color: rgba(255, 255, 255, 0.03);
+}
+
+.data-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+/* Status Badges na tabela */
+.badge-tipo {
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+    display: inline-block;
+}
+
+.badge-tipo.receita {
+    background-color: rgba(16, 185, 129, 0.15);
+    color: var(--cor-receita);
+}
+
+.badge-tipo.despesa {
+    background-color: rgba(239, 68, 68, 0.15);
+    color: var(--cor-despesa);
+}
+
+.badge-tipo.meta {
+    background-color: rgba(245, 158, 11, 0.15);
+    color: var(--cor-meta);
+}

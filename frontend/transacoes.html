@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transações - FinDash</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="app-container">
+
+        <!-- Menu lateral -->
+        <aside class="sidebar">
+            <div class="logo">
+                <h2><i class="fa-solid fa-wallet" style="color: #6366f1;"></i> FinDash</h2>
+            </div>
+            <nav>
+                <a href="index.html"><i class="fa-solid fa-chart-pie"></i> Dashboard</a>
+                <a href="transacoes.html" class="active"><i class="fa-solid fa-list-ul"></i> Transações</a>
+                <a href="#"><i class="fa-solid fa-bullseye"></i> Metas</a>
+            </nav>
+        </aside>
+
+        <!-- Área principal -->
+        <main class="content">
+            <header class="mes-header">
+                <div>
+                    <h1 style="text-align: left; margin: 0;">Histórico de Transações</h1>
+                    <p class="subtitle" style="margin: 4px 0 0 0;">Consulte, filtre e gerencie todas as suas movimentações.</p>
+                </div>
+                <button id="btn-nova-transacao-lista" class="btn-primary" type="button">
+                    <i class="fa-solid fa-plus"></i> Nova Movimentação
+                </button>
+            </header>
+
+            <!-- Barra de Filtros -->
+            <section class="filters-bar">
+                <div class="search-box">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input type="text" id="filtro-busca" placeholder="Buscar por descrição...">
+                </div>
+
+                <div class="filter-group">
+                    <select id="filtro-mes">
+                        <option value="">Todos os meses</option>
+                        <option value="01">Janeiro</option>
+                        <option value="02">Fevereiro</option>
+                        <option value="03">Março</option>
+                        <option value="04">Abril</option>
+                        <option value="05">Maio</option>
+                        <option value="06">Junho</option>
+                        <option value="07">Julho</option>
+                        <option value="08">Agosto</option>
+                        <option value="09">Setembro</option>
+                        <option value="10">Outubro</option>
+                        <option value="11">Novembro</option>
+                        <option value="12">Dezembro</option>
+                    </select>
+
+                    <select id="filtro-ano">
+                        <option value="">Todos os anos</option>
+                    </select>
+
+                    <select id="filtro-tipo">
+                        <option value="">Todos os tipos</option>
+                        <option value="receita">Receitas</option>
+                        <option value="despesa">Despesas</option>
+                    </select>
+                </div>
+            </section>
+
+            <!-- Tabela Completa -->
+            <section class="table-container">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Data</th>
+                            <th>Descrição</th>
+                            <th>Categoria</th>
+                            <th>Tipo</th>
+                            <th style="text-align: right;">Valor</th>
+                            <th style="text-align: center;">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabela-corpo">
+                        <!-- O JS vai injetar as linhas aqui -->
+                        <tr>
+                            <td colspan="6" class="empty-state" style="text-align: center; padding: 40px;">
+                                Carregando histórico...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+        </main>
+    </div>
+    <!-- Modal de movimentação -->
+    <div id="modal-transacao" class="modal-overlay oculto">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Registrar Movimentação</h2>
+                <button id="btn-fechar-modal" class="btn-close" type="button" aria-label="Fechar formulário de movimentação"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form id="form-transacao">
+                <div class="form-group">
+                    <label for="input-descricao">Descrição</label>
+                    <input type="text" id="input-descricao" name="descricao" placeholder="Ex: Conta de Luz" required autocomplete="off">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="input-valor">Valor (R$)</label>
+                        <input type="number" id="input-valor" name="valor" step="0.01" min="0.01" placeholder="0.00" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="select-tipo">Tipo</label>
+                        <select id="select-tipo" name="tipo" required>
+                            <option value="despesa">Despesa</option>
+                            <option value="receita">Receita</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="input-data">Data</label>
+                        <input type="date" id="input-data" name="data" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="select-categoria" style="display: flex; justify-content: space-between;">Categoria <a href="#" id="btn-abrir-gerenciador-categorias" style="color: var(--cor-destaque); font-size: 13px; text-decoration: none;"><i class="fa-solid fa-gear"></i> Gerenciar</a></label>
+                        <select id="select-categoria" name="categoria_id" required><option value="" disabled selected>Carregando categorias...</option></select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="input-meta">ID Meta (Opcional)</label>
+                    <input type="number" id="input-meta" name="meta_id" min="1" placeholder="Vincular a uma meta?">
+                </div>
+                <div class="modal-actions">
+                    <button type="button" id="btn-cancelar-modal" class="btn-secondary">Cancelar</button>
+                    <button type="submit" id="btn-salvar-transacao" class="btn-primary">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal de gerenciamento de categorias -->
+    <div id="modal-categorias" class="modal-overlay oculto" style="z-index: 1050;">
+        <div class="modal-content" style="max-width: 400px;">
+            <div class="modal-header">
+                <h2>Categorias</h2>
+                <button id="btn-fechar-categorias" class="btn-close" type="button"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="category-manager">
+                <form id="form-nova-categoria" class="form-row" style="margin-bottom: 24px;">
+                    <input type="text" id="input-nova-categoria" placeholder="Nova categoria..." required style="flex: 1;">
+                    <button type="submit" class="btn-primary" id="btn-salvar-categoria"><i class="fa-solid fa-plus"></i></button>
+                </form>
+                <div class="categories-list-container">
+                    <ul id="lista-gerenciador-categorias"></ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- O Modal de transações (e futuramente suas funções globais) entrarão aqui -->
+    <script src="transacoes.js"></script>
+</body>
+</html>
