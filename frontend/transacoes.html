@@ -19,7 +19,7 @@
             <nav>
                 <a href="index.html"><i class="fa-solid fa-chart-pie"></i> Dashboard</a>
                 <a href="transacoes.html" class="active"><i class="fa-solid fa-list-ul"></i> Transações</a>
-                <a href="#"><i class="fa-solid fa-bullseye"></i> Metas</a>
+                <a href="metas.html"><i class="fa-solid fa-bullseye"></i> Metas</a>
             </nav>
         </aside>
 
@@ -34,6 +34,28 @@
                     <i class="fa-solid fa-plus"></i> Nova Movimentação
                 </button>
             </header>
+
+
+            <!-- Exibido somente quando a página recebe ?meta_id=... -->
+            <section
+                id="filtro-contexto-meta"
+                class="context-filter-banner oculto"
+                aria-live="polite">
+
+                <div>
+                    <i class="fa-solid fa-bullseye"></i>
+                    <span id="texto-filtro-contexto-meta">
+                        Exibindo movimentações vinculadas a uma meta.
+                    </span>
+                </div>
+
+                <button
+                    id="btn-limpar-filtro-meta"
+                    class="context-filter-clear"
+                    type="button">
+                    Limpar filtro
+                </button>
+            </section>
 
             <!-- Barra de Filtros -->
             <section class="filters-bar">

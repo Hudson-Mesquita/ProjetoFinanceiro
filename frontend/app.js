@@ -163,6 +163,8 @@ function atualizarControlesNavegacaoMensal() {
     titulo.textContent =
         `${nomesMeses[indiceMes]} - ${ano}`;
 
+    atualizarLinksPaginaTransacoes();
+
     /*
      * Sempre permitimos consultar meses anteriores.
      */
@@ -279,6 +281,79 @@ function obterPeriodoSelecionado() {
         ano,
         mesFormatado,
     };
+}
+
+
+/* =========================================================
+   LINKS PARA A PÁGINA DE TRANSAÇÕES
+   ========================================================= */
+
+const PAGINA_TRANSACOES = "transacoes.html";
+
+
+/**
+ * Monta a URL do histórico usando o mês atualmente
+ * selecionado no dashboard e o tipo solicitado.
+ */
+function construirUrlPaginaTransacoes(tipo = "todos") {
+    const {
+        mesFormatado,
+        ano,
+    } = obterPeriodoSelecionado();
+
+    const parametros = new URLSearchParams({
+        tipo,
+        mes: mesFormatado,
+        ano: String(ano),
+    });
+
+    return (
+        `${PAGINA_TRANSACOES}?` +
+        parametros.toString()
+    );
+}
+
+
+/**
+ * Mantém os links dos popovers e o "Ver tudo"
+ * sincronizados com o mês exibido no dashboard.
+ */
+function atualizarLinksPaginaTransacoes() {
+    const linkDespesas =
+        document.getElementById(
+            "link-historico-despesas",
+        );
+
+    const linkReceitas =
+        document.getElementById(
+            "link-historico-receitas",
+        );
+
+    const linkTodas =
+        document.getElementById(
+            "link-todas-transacoes",
+        );
+
+    if (linkDespesas) {
+        linkDespesas.href =
+            construirUrlPaginaTransacoes(
+                "despesa",
+            );
+    }
+
+    if (linkReceitas) {
+        linkReceitas.href =
+            construirUrlPaginaTransacoes(
+                "receita",
+            );
+    }
+
+    if (linkTodas) {
+        linkTodas.href =
+            construirUrlPaginaTransacoes(
+                "todos",
+            );
+    }
 }
 
 

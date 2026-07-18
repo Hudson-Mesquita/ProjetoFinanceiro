@@ -4,6 +4,86 @@ const API_URL = window.FINDASH_API_URL ?? "http://127.0.0.1:8000";
 // Armazena o banco de dados inteiro na memória do navegador para filtros instantâneos
 let bancoDeTransacoes = [];
 
+let filtrosIniciaisDaUrlPendentes = true;
+
+// Filtro contextual opcional, recebido da tela de metas.
+let filtroMetaIdAtivo = null;
+let filtroMetaNomeAtivo = "";
+
+
+/**
+ * Lê e valida os filtros enviados pelo dashboard.
+ */
+function obterFiltrosRecebidosPelaUrl() {
+    const parametros =
+        new URLSearchParams(
+            window.location.search,
+        );
+
+    const tipoRecebido =
+        String(
+            parametros.get("tipo") ?? "",
+        ).toLowerCase();
+
+    const tiposPermitidos =
+        new Set([
+            "todos",
+            "receita",
+            "despesa",
+        ]);
+
+    const tipo =
+        tiposPermitidos.has(tipoRecebido)
+            ? tipoRecebido
+            : "todos";
+
+    const mesRecebido =
+        parametros.get("mes") ?? "";
+
+    const mes =
+        /^(0[1-9]|1[0-2])$/.test(
+            mesRecebido,
+        )
+            ? mesRecebido
+            : "";
+
+    const anoRecebido =
+        parametros.get("ano") ?? "";
+
+    const ano =
+        /^\d{4}$/.test(anoRecebido)
+            ? anoRecebido
+            : "";
+
+    const metaIdRecebido =
+        Number.parseInt(
+            parametros.get("meta_id") ?? "",
+            10,
+        );
+
+    const metaId =
+        Number.isInteger(metaIdRecebido) &&
+        metaIdRecebido > 0
+            ? metaIdRecebido
+            : null;
+
+    const metaNome =
+        String(
+            parametros.get("meta_nome") ?? "",
+        ).trim();
+
+    return {
+        tipo:
+            tipo === "todos"
+                ? ""
+                : tipo,
+        mes,
+        ano,
+        metaId,
+        metaNome,
+    };
+}
+
 // =========================================================
 // UTILITÁRIOS E FORMATAÇÃO
 // =========================================================
@@ -150,8 +230,20 @@ function aplicarFiltros() {
             atendeTipo = tipoBase === "despesa";
         }
 
-        // Se atender a TODOS os filtros, a transação continua na lista
-        return atendeBusca && atendeMes && atendeAno && atendeTipo;
+        // Filtro opcional vindo da tela de metas.
+        const atendeMeta =
+            filtroMetaIdAtivo === null ||
+            Number(transacao.meta_id) ===
+                filtroMetaIdAtivo;
+
+        // Se atender a TODOS os filtros, a transação continua na lista.
+        return (
+            atendeBusca &&
+            atendeMes &&
+            atendeAno &&
+            atendeTipo &&
+            atendeMeta
+        );
     });
 
     renderizarTabela(listaFiltrada);
@@ -173,59 +265,244 @@ function configurarEventosDosFiltros() {
 // FILTROS DINÂMICOS
 // =========================================================
 
-function popularFiltroAnos(listaDeTransacoes) {
-    const selectAno = obterElemento("filtro-ano");
-    
-    // Usamos um Set (Conjunto) para guardar os anos sem deixar repetir
+function popularFiltroAnos(
+    listaDeTransacoes,
+    anoQueDevePermanecerSelecionado = "",
+) {
+    const selectAno =
+        obterElemento("filtro-ano");
+
     const anosUnicos = new Set();
 
-    listaDeTransacoes.forEach(transacao => {
-        if (transacao.data) {
-            const ano = transacao.data.split("-")[0]; // Pega só o YYYY
-            if (ano) anosUnicos.add(ano);
+    for (const transacao of listaDeTransacoes) {
+        if (!transacao.data) {
+            continue;
         }
-    });
 
-    // Transformamos o Set em Array e ordenamos do mais novo pro mais velho
-    const anosOrdenados = Array.from(anosUnicos).sort((a, b) => b - a);
+        const ano =
+            String(transacao.data).split("-")[0];
 
-    // Começamos o HTML do select com a opção padrão
-    let opcoesHTML = '<option value="">Todos os anos</option>';
+        if (ano) {
+            anosUnicos.add(ano);
+        }
+    }
 
-    // Injetamos os anos encontrados no banco de dados
-    anosOrdenados.forEach(ano => {
-        opcoesHTML += `<option value="${ano}">${ano}</option>`;
-    });
+    /*
+     * Mantém disponível o ano recebido pelo dashboard
+     * mesmo quando ele ainda não possui movimentações.
+     */
+    if (anoQueDevePermanecerSelecionado) {
+        anosUnicos.add(
+            anoQueDevePermanecerSelecionado,
+        );
+    }
 
-    selectAno.innerHTML = opcoesHTML;
+    const anosOrdenados =
+        Array.from(anosUnicos).sort(
+            (a, b) => Number(b) - Number(a),
+        );
+
+    selectAno.replaceChildren();
+
+    const opcaoTodos =
+        document.createElement("option");
+
+    opcaoTodos.value = "";
+    opcaoTodos.textContent =
+        "Todos os anos";
+
+    selectAno.appendChild(opcaoTodos);
+
+    for (const ano of anosOrdenados) {
+        const opcao =
+            document.createElement("option");
+
+        opcao.value = ano;
+        opcao.textContent = ano;
+
+        selectAno.appendChild(opcao);
+    }
+
+    selectAno.value =
+        anoQueDevePermanecerSelecionado;
+}
+
+
+/**
+ * Atualiza o aviso exibido quando a página foi aberta
+ * a partir de uma meta específica.
+ */
+function atualizarBannerFiltroMeta() {
+    const banner =
+        document.getElementById(
+            "filtro-contexto-meta",
+        );
+
+    if (!banner) {
+        return;
+    }
+
+    const texto =
+        document.getElementById(
+            "texto-filtro-contexto-meta",
+        );
+
+    const possuiFiltro =
+        filtroMetaIdAtivo !== null;
+
+    banner.classList.toggle(
+        "oculto",
+        !possuiFiltro,
+    );
+
+    if (
+        possuiFiltro &&
+        texto
+    ) {
+        texto.textContent =
+            filtroMetaNomeAtivo
+                ? `Exibindo movimentações da meta “${filtroMetaNomeAtivo}”.`
+                : `Exibindo movimentações vinculadas à meta #${filtroMetaIdAtivo}.`;
+    }
+}
+
+
+/**
+ * Remove o filtro de meta sem alterar os outros filtros.
+ */
+function limparFiltroMeta() {
+    filtroMetaIdAtivo = null;
+    filtroMetaNomeAtivo = "";
+
+    atualizarBannerFiltroMeta();
+
+    const parametros =
+        new URLSearchParams(
+            window.location.search,
+        );
+
+    parametros.delete("meta_id");
+    parametros.delete("meta_nome");
+
+    const novaUrl =
+        parametros.toString()
+            ? `${window.location.pathname}?${parametros.toString()}`
+            : window.location.pathname;
+
+    window.history.replaceState(
+        {},
+        "",
+        novaUrl,
+    );
+
+    aplicarFiltros();
+}
+
+
+/**
+ * Preenche os controles com os filtros recebidos.
+ */
+function aplicarFiltrosRecebidosPelaUrl(
+    filtros,
+) {
+    obterElemento("filtro-mes").value =
+        filtros.mes;
+
+    obterElemento("filtro-ano").value =
+        filtros.ano;
+
+    obterElemento("filtro-tipo").value =
+        filtros.tipo;
+
+    filtroMetaIdAtivo =
+        filtros.metaId ?? null;
+
+    filtroMetaNomeAtivo =
+        filtros.metaNome ?? "";
+
+    atualizarBannerFiltroMeta();
 }
 
 
 async function carregarHistoricoCompleto() {
+    /*
+     * Depois de editar ou excluir, preserva os filtros
+     * que o usuário já estava utilizando.
+     */
+    const filtrosAtuais = {
+        mes:
+            obterElemento("filtro-mes").value,
+        ano:
+            obterElemento("filtro-ano").value,
+        tipo:
+            obterElemento("filtro-tipo").value,
+
+        metaId:
+            filtroMetaIdAtivo,
+
+        metaNome:
+            filtroMetaNomeAtivo,
+    };
+
+    const filtrosDesejados =
+        filtrosIniciaisDaUrlPendentes
+            ? obterFiltrosRecebidosPelaUrl()
+            : filtrosAtuais;
+
     try {
-        // Chamamos a rota sem parâmetros para trazer TUDO o que existe no banco
-        const resposta = await fetch(`${API_URL}/transacoes`);
-        
+        /*
+         * Carrega o histórico completo uma vez.
+         * A filtragem continua instantânea no navegador.
+         */
+        const resposta =
+            await fetch(
+                `${API_URL}/transacoes`,
+            );
+
         if (!resposta.ok) {
-            throw new Error(`Erro HTTP: ${resposta.status}`);
+            throw new Error(
+                `Erro HTTP: ${resposta.status}`,
+            );
         }
-        
-        const dados = await resposta.json();
-        
-        bancoDeTransacoes = Array.isArray(dados.historico) ? dados.historico : [];
-        
-        // NOVO: Alimenta o filtro de anos baseado no banco de dados ANTES de renderizar
-        popularFiltroAnos(bancoDeTransacoes);
-        
-        
-        // Assim que chegar, aplicamos os filtros padrão (que estão vazios, logo, mostra tudo)
+
+        const dados =
+            await resposta.json();
+
+        bancoDeTransacoes =
+            Array.isArray(dados.historico)
+                ? dados.historico
+                : [];
+
+        popularFiltroAnos(
+            bancoDeTransacoes,
+            filtrosDesejados.ano,
+        );
+
+        aplicarFiltrosRecebidosPelaUrl(
+            filtrosDesejados,
+        );
+
+        filtrosIniciaisDaUrlPendentes =
+            false;
+
         aplicarFiltros();
-        
     } catch (erro) {
-        console.error("Falha ao buscar transações:", erro);
-        obterElemento("tabela-corpo").innerHTML = `
+        console.error(
+            "Falha ao buscar transações:",
+            erro,
+        );
+
+        obterElemento(
+            "tabela-corpo",
+        ).innerHTML = `
             <tr>
-                <td colspan="6" style="text-align: center; color: var(--cor-despesa); padding: 40px;">
+                <td
+                    colspan="6"
+                    style="
+                        text-align: center;
+                        color: var(--cor-despesa);
+                        padding: 40px;
+                    ">
                     Erro ao conectar com o servidor.
                 </td>
             </tr>
@@ -492,5 +769,18 @@ function configurarGerenciadorCategorias() {
 document.addEventListener("DOMContentLoaded", () => {
     configurarEventosDosFiltros();
     configurarGerenciadorCategorias();
+
+    const btnLimparFiltroMeta =
+        document.getElementById(
+            "btn-limpar-filtro-meta",
+        );
+
+    if (btnLimparFiltroMeta) {
+        btnLimparFiltroMeta.addEventListener(
+            "click",
+            limparFiltroMeta,
+        );
+    }
+
     carregarHistoricoCompleto();
 });

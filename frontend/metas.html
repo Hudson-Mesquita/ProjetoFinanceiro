@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Metas - FinDash</title>
+
+    <link rel="stylesheet" href="style.css">
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+
+    <link
+        rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="app-container">
+
+        <!-- Menu lateral -->
+        <aside class="sidebar">
+            <div class="logo">
+                <h2>
+                    <i class="fa-solid fa-wallet" style="color: #6366f1;"></i>
+                    FinDash
+                </h2>
+            </div>
+
+            <nav>
+                <a href="index.html">
+                    <i class="fa-solid fa-chart-pie"></i>
+                    Dashboard
+                </a>
+
+                <a href="transacoes.html">
+                    <i class="fa-solid fa-list-ul"></i>
+                    Transações
+                </a>
+
+                <a href="metas.html" class="active">
+                    <i class="fa-solid fa-bullseye"></i>
+                    Metas
+                </a>
+            </nav>
+        </aside>
+
+        <!-- Área principal -->
+        <main class="content goals-page">
+
+            <header class="mes-header goals-page-header">
+                <div class="page-heading">
+                    <h1>Metas Financeiras</h1>
+
+                    <p class="subtitle">
+                        Planeje objetivos, acompanhe o progresso e registre seus aportes.
+                    </p>
+                </div>
+
+                <button
+                    id="btn-nova-meta"
+                    class="btn-primary"
+                    type="button">
+
+                    <i class="fa-solid fa-plus"></i>
+                    Nova Meta
+                </button>
+            </header>
+
+            <!-- Resumo geral das metas -->
+            <section class="goals-summary-grid" aria-label="Resumo das metas">
+
+                <article class="goal-summary-card">
+                    <div class="goal-summary-icon primary">
+                        <i class="fa-solid fa-bullseye"></i>
+                    </div>
+
+                    <div>
+                        <span>Metas ativas</span>
+                        <strong id="resumo-metas-ativas">0</strong>
+                    </div>
+                </article>
+
+                <article class="goal-summary-card">
+                    <div class="goal-summary-icon target">
+                        <i class="fa-solid fa-flag-checkered"></i>
+                    </div>
+
+                    <div>
+                        <span>Objetivo total</span>
+                        <strong id="resumo-valor-alvo">R$ 0,00</strong>
+                    </div>
+                </article>
+
+                <article class="goal-summary-card">
+                    <div class="goal-summary-icon saved">
+                        <i class="fa-solid fa-piggy-bank"></i>
+                    </div>
+
+                    <div>
+                        <span>Total reservado</span>
+                        <strong id="resumo-valor-poupado">R$ 0,00</strong>
+                    </div>
+                </article>
+
+                <article class="goal-summary-card">
+                    <div class="goal-summary-icon remaining">
+                        <i class="fa-solid fa-hourglass-half"></i>
+                    </div>
+
+                    <div>
+                        <span>Valor restante</span>
+                        <strong id="resumo-valor-restante">R$ 0,00</strong>
+                    </div>
+                </article>
+
+            </section>
+
+            <!-- Busca e filtro -->
+            <section class="goals-toolbar">
+                <div class="search-box goals-search-box">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+
+                    <input
+                        id="filtro-busca-meta"
+                        type="search"
+                        placeholder="Buscar meta pelo nome..."
+                        autocomplete="off">
+                </div>
+
+                <select
+                    id="filtro-status-meta"
+                    aria-label="Filtrar metas por status">
+
+                    <option value="todas">Todas as metas</option>
+                    <option value="andamento">Em andamento</option>
+                    <option value="concluida">Concluídas</option>
+                </select>
+            </section>
+
+            <!-- Cartões criados pelo JavaScript -->
+            <section
+                id="lista-metas"
+                class="goals-grid"
+                aria-live="polite">
+
+                <div class="goals-loading-state">
+                    <i class="fa-solid fa-circle-notch fa-spin"></i>
+                    <p>Carregando metas...</p>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- =====================================================
+         MODAL: CRIAR META
+         ===================================================== -->
+    <div id="modal-meta" class="modal-overlay oculto">
+        <div class="modal-content goal-modal-content">
+
+            <div class="modal-header">
+                <div>
+                    <h2>Nova Meta</h2>
+                    <p class="modal-subtitle">
+                        Defina o objetivo e como pretende alcançá-lo.
+                    </p>
+                </div>
+
+                <button
+                    id="btn-fechar-modal-meta"
+                    class="btn-close"
+                    type="button"
+                    aria-label="Fechar formulário de meta">
+
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <form id="form-meta">
+                <div class="form-group">
+                    <label for="input-nome-meta">Nome da meta</label>
+
+                    <input
+                        id="input-nome-meta"
+                        name="nome"
+                        type="text"
+                        maxlength="100"
+                        placeholder="Ex: Comprar um PlayStation 5"
+                        autocomplete="off"
+                        required>
+                </div>
+
+                <div class="form-group">
+                    <label for="input-valor-alvo-meta">Valor-alvo</label>
+
+                    <input
+                        id="input-valor-alvo-meta"
+                        name="valor_alvo"
+                        type="number"
+                        min="0.01"
+                        step="0.01"
+                        placeholder="0,00"
+                        required>
+                </div>
+
+                <fieldset class="goal-plan-fieldset">
+                    <legend>Como deseja planejar?</legend>
+
+                    <div class="goal-plan-options">
+                        <label class="goal-plan-option ativo">
+                            <input
+                                type="radio"
+                                name="modo_planejamento"
+                                value="prazo"
+                                checked>
+
+                            <span>
+                                <i class="fa-regular fa-calendar"></i>
+                                Definir prazo
+                            </span>
+                        </label>
+
+                        <label class="goal-plan-option">
+                            <input
+                                type="radio"
+                                name="modo_planejamento"
+                                value="mensal">
+
+                            <span>
+                                <i class="fa-solid fa-coins"></i>
+                                Definir valor mensal
+                            </span>
+                        </label>
+                    </div>
+                </fieldset>
+
+                <div id="grupo-prazo-meta" class="form-group">
+                    <label for="input-prazo-meta">Prazo em meses</label>
+
+                    <input
+                        id="input-prazo-meta"
+                        name="prazo_meses"
+                        type="number"
+                        min="1"
+                        step="1"
+                        placeholder="Ex: 12">
+                </div>
+
+                <div id="grupo-mensal-meta" class="form-group oculto">
+                    <label for="input-valor-mensal-meta">
+                        Valor disponível por mês
+                    </label>
+
+                    <input
+                        id="input-valor-mensal-meta"
+                        name="valor_mensal"
+                        type="number"
+                        min="0.01"
+                        step="0.01"
+                        placeholder="0,00">
+                </div>
+
+                <!-- Prévia calculada no navegador -->
+                <div id="preview-planejamento-meta" class="goal-plan-preview">
+                    <div>
+                        <span>Contribuição mensal estimada</span>
+                        <strong id="preview-valor-mensal">R$ 0,00</strong>
+                    </div>
+
+                    <div>
+                        <span>Prazo estimado</span>
+                        <strong id="preview-prazo">—</strong>
+                    </div>
+
+                    <div>
+                        <span>Última contribuição</span>
+                        <strong id="preview-ultima-parcela">R$ 0,00</strong>
+                    </div>
+                </div>
+
+                <div class="modal-actions">
+                    <button
+                        id="btn-cancelar-modal-meta"
+                        class="btn-secondary"
+                        type="button">
+                        Cancelar
+                    </button>
+
+                    <button
+                        id="btn-salvar-meta"
+                        class="btn-primary"
+                        type="submit">
+
+                        <i class="fa-solid fa-floppy-disk"></i>
+                        Criar Meta
+                    </button>
+                </div>
+            </form>
+
+        </div>
+    </div>
+
+    <!-- =====================================================
+         MODAL: REGISTRAR APORTE
+         ===================================================== -->
+    <div id="modal-aporte" class="modal-overlay oculto">
+        <div class="modal-content goal-modal-content">
+
+            <div class="modal-header">
+                <div>
+                    <h2>Registrar Aporte</h2>
+
+                    <p
+                        id="subtitulo-modal-aporte"
+                        class="modal-subtitle">
+                        Adicione dinheiro a uma meta.
+                    </p>
+                </div>
+
+                <button
+                    id="btn-fechar-modal-aporte"
+                    class="btn-close"
+                    type="button"
+                    aria-label="Fechar formulário de aporte">
+
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <form id="form-aporte">
+                <input id="input-aporte-meta-id" name="meta_id" type="hidden">
+
+                <div class="goal-contribution-notice">
+                    <i class="fa-solid fa-circle-info"></i>
+
+                    <p>
+                        O aporte será registrado como uma despesa vinculada à meta,
+                        representando dinheiro reservado e indisponível para gastos.
+                    </p>
+                </div>
+
+                <div class="form-group">
+                    <label for="input-descricao-aporte">Descrição</label>
+
+                    <input
+                        id="input-descricao-aporte"
+                        name="descricao"
+                        type="text"
+                        maxlength="120"
+                        autocomplete="off"
+                        required>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="input-valor-aporte">Valor do aporte</label>
+
+                        <input
+                            id="input-valor-aporte"
+                            name="valor"
+                            type="number"
+                            min="0.01"
+                            step="0.01"
+                            placeholder="0,00"
+                            required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="input-data-aporte">Data</label>
+
+                        <input
+                            id="input-data-aporte"
+                            name="data"
+                            type="date"
+                            required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="select-categoria-aporte">Categoria</label>
+
+                    <select
+                        id="select-categoria-aporte"
+                        name="categoria_id"
+                        required>
+
+                        <option value="" disabled selected>
+                            Carregando categorias...
+                        </option>
+                    </select>
+
+                    <small class="form-helper">
+                        Uma categoria como “Reserva” ou “Metas” facilita a análise.
+                    </small>
+                </div>
+
+                <div class="modal-actions">
+                    <button
+                        id="btn-cancelar-modal-aporte"
+                        class="btn-secondary"
+                        type="button">
+                        Cancelar
+                    </button>
+
+                    <button
+                        id="btn-salvar-aporte"
+                        class="btn-primary"
+                        type="submit">
+
+                        <i class="fa-solid fa-piggy-bank"></i>
+                        Registrar Aporte
+                    </button>
+                </div>
+            </form>
+
+        </div>
+    </div>
+
+    <!-- Notificações não bloqueantes -->
+    <div
+        id="toast-container"
+        class="toast-container"
+        aria-live="polite"
+        aria-atomic="true">
+    </div>
+
+    <script src="metas.js"></script>
+</body>
+</html>
