@@ -17,6 +17,27 @@ const nomesMeses = [
     "Dezembro",
 ];
 
+const dataHoje = new Date();
+
+const periodoAtual = new Date(
+    dataHoje.getFullYear(),
+    dataHoje.getMonth(),
+    1,
+);
+
+let periodoSelecionado = new Date(
+    periodoAtual.getFullYear(),
+    periodoAtual.getMonth(),
+    1,
+);
+
+/*
+ * Evita que uma resposta antiga da API sobrescreva
+ * uma resposta mais recente caso o usuário clique rápido.
+ */
+let sequenciaCarregamentoDashboard = 0;
+let dashboardEstaCarregando = false;
+
 /*
  * Guarda a instância atual do Chart.js.
  *
@@ -89,12 +110,184 @@ function formatarData(data) {
 
     return new Intl.DateTimeFormat("pt-BR").format(dataLocal);
 }
+
+
+/**
+ * Converte um período em um índice absoluto para comparação.
+ *
+ * Exemplo: julho de 2026 -> 2026 * 12 + 6.
+ */
+function obterIndiceAbsolutoPeriodo(data) {
+    return (
+        data.getFullYear() * 12 +
+        data.getMonth()
+    );
+}
+
+/**
+ * Retorna true quando o usuário já está visualizando
+ * o mês vigente.
+ */
+function estaNoMesAtual() {
+    return (
+        obterIndiceAbsolutoPeriodo(
+            periodoSelecionado,
+        ) ===
+        obterIndiceAbsolutoPeriodo(
+            periodoAtual,
+        )
+    );
+}
+
+/**
+ * Atualiza:
+ * - o título "Julho - 2026";
+ * - o estado da seta seguinte;
+ * - o estado de carregamento dos botões.
+ */
+function atualizarControlesNavegacaoMensal() {
+    const btnAnterior =
+        obterElemento("btn-mes-anterior");
+
+    const btnSeguinte =
+        obterElemento("btn-mes-seguinte");
+
+    const titulo =
+        obterElemento("titulo-mes");
+
+    const {
+        indiceMes,
+        ano,
+    } = obterPeriodoSelecionado();
+
+    titulo.textContent =
+        `${nomesMeses[indiceMes]} - ${ano}`;
+
+    /*
+     * Sempre permitimos consultar meses anteriores.
+     */
+    btnAnterior.disabled =
+        dashboardEstaCarregando;
+
+    /*
+     * Não avançamos além do mês atual.
+     *
+     * Quando o usuário estiver em junho, por exemplo,
+     * a seta direita permite voltar para julho.
+     * Em julho, ela fica desativada.
+     */
+    btnSeguinte.disabled =
+        dashboardEstaCarregando ||
+        estaNoMesAtual();
+}
+
+/**
+ * Adiciona uma animação curta depois que o novo mês
+ * foi renderizado.
+ *
+ * direcao:
+ * -1 = usuário voltou para um mês anterior;
+ *  1 = usuário avançou para um mês mais recente.
+ */
+function animarConteudoDoPeriodo(direcao) {
+    const container =
+        document.getElementById(
+            "conteudo-periodo",
+        );
+
+    if (!container || direcao === 0) {
+        return;
+    }
+
+    const classeAnimacao =
+        direcao < 0
+            ? "period-enter-from-left"
+            : "period-enter-from-right";
+
+    container.classList.remove(
+        "period-enter-from-left",
+        "period-enter-from-right",
+    );
+
+    /*
+     * Força o navegador a reconhecer uma nova animação
+     * mesmo quando o usuário navega várias vezes seguidas.
+     */
+    void container.offsetWidth;
+
+    container.classList.add(
+        classeAnimacao,
+    );
+
+    container.addEventListener(
+        "animationend",
+        () => {
+            container.classList.remove(
+                classeAnimacao,
+            );
+        },
+        {
+            once: true,
+        },
+    );
+}
+/**
+ * Marca visualmente que o conteúdo do período
+ * está sendo atualizado.
+ */
+function definirCarregamentoDoPeriodo(
+    estaCarregando,
+) {
+    dashboardEstaCarregando =
+        estaCarregando;
+
+    const container =
+        document.getElementById(
+            "conteudo-periodo",
+        );
+
+    if (container) {
+        container.classList.toggle(
+            "period-loading",
+            estaCarregando,
+        );
+    }
+
+    atualizarControlesNavegacaoMensal();
+}
+
+
+/**
+ * Devolve o mês e o ano atualmente selecionados
+ * nos formatos usados pela API e pelo Chart.js.
+ */
+function obterPeriodoSelecionado() {
+    const indiceMes =
+        periodoSelecionado.getMonth();
+
+    const ano =
+        periodoSelecionado.getFullYear();
+
+    const mesFormatado =
+        String(indiceMes + 1).padStart(
+            2,
+            "0",
+        );
+
+    return {
+        indiceMes,
+        ano,
+        mesFormatado,
+    };
+}
+
+
 /**
  * Retorna a data local no formato YYYY-MM-DD.
  *
  * O input type="date" exige exatamente esse formato.
- * Não usamos diretamente new Date().toISOString(), porque
- * toISOString trabalha com UTC e pode avançar a data no Brasil.
+ * Não usamos diretamente toISOString() porque ele trabalha
+ * com UTC e pode avançar a data no horário brasileiro.
  */
 function obterDataLocalISO() {
     const agora = new Date();
@@ -118,6 +311,128 @@ function ordenarPorMaisRecentes(transacoes) {
         return normalizarNumero(b.id) - normalizarNumero(a.id);
     });
 }
+
+/**
+ * Move o período selecionado.
+ *
+ * deslocamento:
+ * -1 = mês anterior;
+ *  1 = mês seguinte.
+ */
+async function navegarEntreMeses(
+    deslocamento,
+) {
+    if (dashboardEstaCarregando) {
+        return;
+    }
+
+    const novoPeriodo = new Date(
+        periodoSelecionado.getFullYear(),
+        periodoSelecionado.getMonth() +
+            deslocamento,
+        1,
+    );
+
+    /*
+     * Proteção extra: meses futuros não são abertos.
+     */
+    if (
+        obterIndiceAbsolutoPeriodo(
+            novoPeriodo,
+        ) >
+        obterIndiceAbsolutoPeriodo(
+            periodoAtual,
+        )
+    ) {
+        return;
+    }
+
+    periodoSelecionado = novoPeriodo;
+
+    atualizarControlesNavegacaoMensal();
+
+    await carregarDashboard(
+        deslocamento,
+    );
+}
+
+function configurarNavegacaoMensal() {
+    const btnAnterior =
+        obterElemento("btn-mes-anterior");
+
+    const btnSeguinte =
+        obterElemento("btn-mes-seguinte");
+
+    btnAnterior.addEventListener(
+        "click",
+        () => {
+            navegarEntreMeses(-1);
+        },
+    );
+
+    btnSeguinte.addEventListener(
+        "click",
+        () => {
+            navegarEntreMeses(1);
+        },
+    );
+
+    atualizarControlesNavegacaoMensal();
+}
+/**
+ * Sugere uma data dentro do mês visualizado
+ * ao criar uma nova movimentação.
+ *
+ * - No mês atual: usa a data de hoje.
+ * - Em um mês anterior: mantém o mesmo número do dia,
+ *   limitado ao último dia daquele mês.
+ *
+ * Exemplo:
+ * hoje = 31/07
+ * mês visualizado = junho
+ * resultado = 30/06
+ */
+function obterDataInicialDoPeriodoSelecionado() {
+    if (estaNoMesAtual()) {
+        return obterDataLocalISO();
+    }
+
+    const ano =
+        periodoSelecionado.getFullYear();
+
+    const indiceMes =
+        periodoSelecionado.getMonth();
+
+    const ultimoDiaDoMes =
+        new Date(
+            ano,
+            indiceMes + 1,
+            0,
+        ).getDate();
+
+    const dia =
+        Math.min(
+            dataHoje.getDate(),
+            ultimoDiaDoMes,
+        );
+
+    const mesFormatado =
+        String(indiceMes + 1).padStart(
+            2,
+            "0",
+        );
+
+    const diaFormatado =
+        String(dia).padStart(
+            2,
+            "0",
+        );
+
+    return (
+        `${ano}-${mesFormatado}-${diaFormatado}`
+    );
+}
+
 
 async function buscarJson(url, opcoes = {}) {
     const resposta = await fetch(url, opcoes);
@@ -528,7 +843,7 @@ async function abrirModalTransacao(transacao = null) {
         await carregarCategoriasParaModal();
 
         form.elements["data"].value =
-            obterDataLocalISO();
+            obterDataInicialDoPeriodoSelecionado();
     }
 
     modal.classList.remove("oculto");
@@ -1734,35 +2049,7 @@ function renderizarModoGraficoAtual() {
 }
 
 
-/**
- * Remove o gráfico atual e exibe uma mensagem.
- */
-function mostrarGraficoVazio(mensagem) {
-    const canvas =
-        obterElemento("grafico-financeiro");
 
-    const estadoVazio =
-        obterElemento("grafico-vazio");
-
-    /*
-     * Destrói a instância anterior para liberar o canvas.
-     */
-    if (graficoFinanceiro) {
-        graficoFinanceiro.destroy();
-        graficoFinanceiro = null;
-    }
-
-    canvas.hidden = true;
-
-    const paragrafo =
-        estadoVazio.querySelector("p");
-
-    if (paragrafo) {
-        paragrafo.textContent = mensagem;
-    }
-
-    estadoVazio.classList.remove("oculto");
-}
 
 
 /**
@@ -1830,55 +2117,118 @@ function configurarSeletorGraficos() {
 
 
 
-async function carregarDashboard() {
-    const dataAtual = new Date();
-    const mesAtual = dataAtual.getMonth();
-    const anoAtual = dataAtual.getFullYear();
-    const mesFormatado = String(mesAtual + 1).padStart(2, "0");
+async function carregarDashboard(
+    direcaoAnimacao = 0,
+) {
+    const idDesteCarregamento =
+        ++sequenciaCarregamentoDashboard;
 
-    obterElemento("titulo-mes").textContent =
-        `${nomesMeses[mesAtual]} - ${anoAtual}`;
+    const {
+        indiceMes,
+        ano,
+        mesFormatado,
+    } = obterPeriodoSelecionado();
+
+    atualizarControlesNavegacaoMensal();
+    definirCarregamentoDoPeriodo(true);
 
     try {
-        const [dadosSaldo, dadosExtrato] = await Promise.all([
+        const [
+            dadosSaldo,
+            dadosExtrato,
+        ] = await Promise.all([
             buscarJson(
-                `${API_URL}/dashboard/saldo?mes=${mesFormatado}&ano=${anoAtual}`,
+                `${API_URL}/dashboard/saldo?mes=${mesFormatado}&ano=${ano}`,
             ),
+
             buscarJson(
-                `${API_URL}/transacoes?mes=${mesFormatado}&ano=${anoAtual}`,
+                `${API_URL}/transacoes?mes=${mesFormatado}&ano=${ano}`,
             ),
         ]);
 
-        const historico = Array.isArray(dadosExtrato.historico)
-            ? dadosExtrato.historico
-            : [];
+        /*
+         * Caso outro carregamento tenha começado depois,
+         * ignoramos esta resposta antiga.
+         */
+        if (
+            idDesteCarregamento !==
+            sequenciaCarregamentoDashboard
+        ) {
+            return;
+        }
 
-        atualizarResumo(dadosSaldo);
-        renderizarTransacoes(historico);
+        const historico =
+            Array.isArray(
+                dadosExtrato.historico,
+            )
+                ? dadosExtrato.historico
+                : [];
+
+        atualizarResumo(
+            dadosSaldo,
+        );
+
+        renderizarTransacoes(
+            historico,
+        );
+
         renderizarMiniLista(
             "lista-mini-despesas",
             historico,
             "despesa",
         );
+
         renderizarMiniLista(
             "lista-mini-receitas",
             historico,
             "receita",
         );
+
         /*
- * Atualiza o gráfico usando as mesmas movimentações
- * que já foram carregadas para o dashboard.
- */
+         * Os dois gráficos que já criamos recebem
+         * automaticamente o mês escolhido.
+         */
         renderizarGraficoFinanceiro(
             historico,
-            anoAtual,
-            mesAtual,
+            ano,
+            indiceMes,
+        );
+
+        animarConteudoDoPeriodo(
+            direcaoAnimacao,
         );
     } catch (erro) {
-        mostrarErroNoDashboard(erro);
-        mostrarGraficoVazio(
-        "Não foi possível carregar os dados do gráfico.",
-    );
+        /*
+         * Também ignoramos erros de uma chamada obsoleta.
+         */
+        if (
+            idDesteCarregamento !==
+            sequenciaCarregamentoDashboard
+        ) {
+            return;
+        }
+
+        mostrarErroNoDashboard(
+            erro,
+        );
+
+        if (
+            typeof mostrarGraficoVazio ===
+            "function"
+        ) {
+            mostrarGraficoVazio(
+                "Não foi possível carregar os dados deste mês.",
+            );
+        }
+    } finally {
+        if (
+            idDesteCarregamento ===
+            sequenciaCarregamentoDashboard
+        ) {
+            definirCarregamentoDoPeriodo(
+                false,
+            );
+        }
     }
 }
 
@@ -1887,7 +2237,8 @@ document.addEventListener("DOMContentLoaded", () => {
     configurarModalTransacao();
     configurarGerenciadorCategorias();
     configurarSeletorGraficos();
-    
+    configurarNavegacaoMensal();
+
     carregarCategoriasParaModal();
     carregarDashboard();
 

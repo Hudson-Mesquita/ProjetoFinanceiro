@@ -81,6 +81,8 @@ body {
 /* --- ÁREA PRINCIPAL --- */
 .content {
     flex: 1;
+    width: 100%;
+    min-width: 0;
     padding: 40px;
     overflow-y: auto;
 }
@@ -98,6 +100,10 @@ header .subtitle {
 /* --- CARTÕES (DASHBOARD) --- */
 /* --- CABEÇALHO DO MÊS --- */
 .mes-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
     text-align: center;
     margin-bottom: 32px;
 }
@@ -702,7 +708,7 @@ form input[type="number"]::-webkit-outer-spin-button {
 /* Aba atualmente selecionada. */
 .chart-mode-btn.ativo {
     color: #ffffff;
-    background-color: var(--cor-primaria);
+    background-color: var(--cor-destaque);
 }
 
 .chart-mode-btn:active {
@@ -839,5 +845,173 @@ form input[type="number"]::-webkit-outer-spin-button {
 
     .chart-canvas-container {
         height: 300px;
+    }
+}
+
+.month-navigation {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 18px;
+
+    min-width: 340px;
+}
+
+/* Título central do período selecionado. */
+.month-navigation-title {
+    min-width: 210px;
+    margin: 0;
+
+    color: var(--cor-destaque);
+    text-align: center;
+    font-size: 30px;
+    font-weight: 700;
+}
+
+/*
+ * Setas relativamente grandes, mas sem ocupar o espaço
+ * de um cartão inteiro do dashboard.
+ */
+.month-navigation-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    width: 48px;
+    height: 48px;
+    flex: 0 0 48px;
+
+    border: 1px solid var(--borda);
+    border-radius: 14px;
+
+    background-color: var(--bg-card);
+    color: var(--cor-destaque);
+
+    font-size: 20px;
+    cursor: pointer;
+
+    transition:
+        color 0.18s ease,
+        border-color 0.18s ease,
+        background-color 0.18s ease,
+        transform 0.18s ease,
+        opacity 0.18s ease;
+}
+
+.month-navigation-button:hover:not(:disabled) {
+    color: #ffffff;
+    border-color: var(--cor-destaque);
+    background-color: var(--cor-destaque);
+    transform: translateY(-2px);
+}
+
+.month-navigation-button:active:not(:disabled) {
+    transform: translateY(0) scale(0.96);
+}
+
+/*
+ * Quando o dashboard já está no mês atual,
+ * a seta da direita fica desativada.
+ */
+.month-navigation-button:disabled {
+    opacity: 0.28;
+    cursor: not-allowed;
+}
+
+/* =========================================================
+   TRANSIÇÃO DO CONTEÚDO
+   ========================================================= */
+
+/*
+ * Este wrapper recebe as animações depois que os dados
+ * do novo mês terminam de carregar.
+ */
+.period-content {
+    width: 100%;
+    will-change: transform, opacity;
+}
+
+/* Leve transparência enquanto a API está sendo consultada. */
+.period-content.period-loading {
+    opacity: 0.58;
+    pointer-events: none;
+}
+
+/*
+ * Ao voltar para um mês anterior, o conteúdo novo entra
+ * discretamente pela esquerda.
+ */
+.period-content.period-enter-from-left {
+    animation: periodEnterFromLeft 220ms ease-out;
+}
+
+/*
+ * Ao avançar para um mês mais recente, o conteúdo novo
+ * entra discretamente pela direita.
+ */
+.period-content.period-enter-from-right {
+    animation: periodEnterFromRight 220ms ease-out;
+}
+
+@keyframes periodEnterFromLeft {
+    from {
+        opacity: 0;
+        transform: translateX(-22px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes periodEnterFromRight {
+    from {
+        opacity: 0;
+        transform: translateX(22px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/*
+ * O projeto não precisa ser mobile-first agora,
+ * mas esta regra impede que o título e as setas estourem
+ * quando a janela do aplicativo estiver estreita.
+ */
+@media (max-width: 760px) {
+    .month-navigation {
+        gap: 10px;
+        min-width: 0;
+        width: 100%;
+    }
+
+    .month-navigation-title {
+        min-width: 0;
+        flex: 1;
+        font-size: 24px;
+    }
+
+    .month-navigation-button {
+        width: 42px;
+        height: 42px;
+        flex-basis: 42px;
+    }
+}
+
+/*
+ * Respeita usuários que desativam animações no sistema.
+ */
+@media (prefers-reduced-motion: reduce) {
+    .period-content.period-enter-from-left,
+    .period-content.period-enter-from-right {
+        animation: none;
+    }
+
+    .month-navigation-button {
+        transition: none;
     }
 }

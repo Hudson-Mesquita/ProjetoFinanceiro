@@ -4,214 +4,300 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FinDash</title>
+
     <link rel="stylesheet" href="style.css">
+
     <!-- Fonte moderna (Inter) -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <!-- Ícones (FontAwesome) -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+
+    <!-- Ícones (Font Awesome) -->
+    <link
+        rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
     <div class="app-container">
-        
-        <!-- Menu Lateral -->
+
+        <!-- Menu lateral -->
         <aside class="sidebar">
             <div class="logo">
-                <h2><i class="fa-solid fa-wallet" style="color: #6366f1;"></i> FinDash</h2>
+                <h2>
+                    <i class="fa-solid fa-wallet" style="color: #6366f1;"></i>
+                    FinDash
+                </h2>
             </div>
+
             <nav>
-                <a href="#" class="active"><i class="fa-solid fa-chart-pie"></i> Dashboard</a>
-                <a href="#"><i class="fa-solid fa-list-ul"></i> Transações</a>
-                <a href="#"><i class="fa-solid fa-bullseye"></i> Metas</a>
+                <a href="#" class="active">
+                    <i class="fa-solid fa-chart-pie"></i>
+                    Dashboard
+                </a>
+
+                <a href="#">
+                    <i class="fa-solid fa-list-ul"></i>
+                    Transações
+                </a>
+
+                <a href="#">
+                    <i class="fa-solid fa-bullseye"></i>
+                    Metas
+                </a>
             </nav>
         </aside>
 
-        <!-- Área Principal -->
+        <!-- Área principal -->
         <main class="content">
-            <header class="mes-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px;">
-                <!-- O h1 original continua aqui -->
-                <h1 id="titulo-mes">Julho - 2026</h1> 
-                
-                <!-- NOVO BOTÃO -->
-                <button id="btn-nova-transacao" class="btn-primary">
-                    <i class="fa-solid fa-plus"></i> Nova Movimentação
+
+            <!-- Cabeçalho do período -->
+            <header class="mes-header">
+                <div class="month-navigation">
+                    <button
+                        id="btn-mes-anterior"
+                        class="month-navigation-button"
+                        type="button"
+                        aria-label="Visualizar mês anterior"
+                        title="Mês anterior">
+
+                        <i class="fa-solid fa-chevron-left"></i>
+                    </button>
+
+                    <h1
+                        id="titulo-mes"
+                        class="month-navigation-title"
+                        aria-live="polite">
+                        Julho - 2026
+                    </h1>
+
+                    <button
+                        id="btn-mes-seguinte"
+                        class="month-navigation-button"
+                        type="button"
+                        aria-label="Visualizar mês seguinte"
+                        title="Mês seguinte">
+
+                        <i class="fa-solid fa-chevron-right"></i>
+                    </button>
+                </div>
+
+                <button
+                    id="btn-nova-transacao"
+                    class="btn-primary"
+                    type="button">
+
+                    <i class="fa-solid fa-plus"></i>
+                    Nova Movimentação
                 </button>
             </header>
 
-            <!-- NOVO: Cartão Central de Saldo -->
-            <section class="dashboard-highlight">
-                <div class="main-balance-card">
-                    
-                    <div class="balance-top">
-                        <h3>Saldo Total</h3>
-                        <h2 id="valor-saldo">R$ 0,00</h2>
-                    </div>
-
-                   <div class="balance-bottom">
-                        <!-- Despesas na Esquerda -->
-                        <div class="sub-info despesa-info clicavel" id="btn-despesas">
-                            <div class="icon-box"><i class="fa-solid fa-arrow-trend-down"></i></div>
-                            <div>
-                                <h4>Despesas</h4>
-                                <p id="valor-despesas">R$ 0,00</p>
-                            </div>
-                            
-                            <!-- O Menu Suspenso Invisível -->
-                            <div class="popover-menu oculto" id="popover-despesas">
-                                <h5>Últimas Despesas</h5>
-                                <ul id="lista-mini-despesas">
-                                    <!-- JS vai injetar aqui -->
-                                </ul>
-                                <a href="#">Ver histórico completo</a>
-                            </div>
-                        </div>
-
-                        <!-- Receitas na Direita -->
-                        <div class="sub-info receita-info clicavel" id="btn-receitas">
-                            <div class="icon-box"><i class="fa-solid fa-arrow-trend-up"></i></div>
-                            <div>
-                                <h4>Receitas</h4>
-                                <p id="valor-receitas">R$ 0,00</p>
-                            </div>
-                            
-                            <!-- O Menu Suspenso Invisível -->
-                            <div class="popover-menu oculto" id="popover-receitas">
-                                <h5>Últimas Receitas</h5>
-                                <ul id="lista-mini-receitas">
-                                    <!-- JS vai injetar aqui -->
-                                </ul>
-                                <a href="#">Ver histórico completo</a>
-                            </div>
-                        </div>
-                    </div>
-
-                </div>
-            </section>
-            <!-- NOVO: Tabela de Últimas Transações -->
-            <section class="recent-transactions">
-                <div class="section-header">
-                    <h2>Últimas Movimentações</h2>
-                    <a href="#" class="view-all">Ver tudo</a>
-                </div>
-                
-                <div class="transactions-list" id="lista-transacoes">
-                    <!-- O JavaScript vai injetar as transações aqui -->
-                    <div class="empty-state">
-                        <p>Buscando transações...</p>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Espaço reservado para o futuro Gráfico (Mantido) -->
-
-    <section class="chart-section">
-
-        <div class="chart-section-header">
-            <h2>Análise Financeira</h2>
-
             <!--
-                As duas opções usam o mesmo canvas.
-                O JavaScript apenas destrói o gráfico anterior e desenha o novo.
+                Tudo dentro deste wrapper muda quando o usuário troca o mês.
+                Ele também recebe a animação definida no CSS/JavaScript.
             -->
-            <div
-                class="chart-mode-switch"
-                role="tablist"
-                aria-label="Escolha do gráfico financeiro">
+            <div id="conteudo-periodo" class="period-content">
 
-                <button
-                    id="btn-grafico-fluxo"
-                    class="chart-mode-btn ativo"
-                    type="button"
-                    role="tab"
-                    aria-selected="true"
-                    data-chart-mode="fluxo">
-                    Fluxo mensal
-                </button>
+                <!-- Cartão principal de saldo -->
+                <section class="dashboard-highlight">
+                    <div class="main-balance-card">
 
-                <button
-                    id="btn-grafico-alocacao"
-                    class="chart-mode-btn"
-                    type="button"
-                    role="tab"
-                    aria-selected="false"
-                    data-chart-mode="alocacao">
-                    Alocação da renda
-                </button>
+                        <div class="balance-top">
+                            <h3>Saldo Total</h3>
+                            <h2 id="valor-saldo">R$ 0,00</h2>
+                        </div>
+
+                        <div class="balance-bottom">
+                            <!-- Despesas -->
+                            <div
+                                class="sub-info despesa-info clicavel"
+                                id="btn-despesas">
+
+                                <div class="icon-box">
+                                    <i class="fa-solid fa-arrow-trend-down"></i>
+                                </div>
+
+                                <div>
+                                    <h4>Despesas</h4>
+                                    <p id="valor-despesas">R$ 0,00</p>
+                                </div>
+
+                                <div
+                                    class="popover-menu oculto"
+                                    id="popover-despesas">
+
+                                    <h5>Últimas Despesas</h5>
+
+                                    <ul id="lista-mini-despesas">
+                                        <!-- O JavaScript injeta os itens aqui. -->
+                                    </ul>
+
+                                    <a href="#">Ver histórico completo</a>
+                                </div>
+                            </div>
+
+                            <!-- Receitas -->
+                            <div
+                                class="sub-info receita-info clicavel"
+                                id="btn-receitas">
+
+                                <div class="icon-box">
+                                    <i class="fa-solid fa-arrow-trend-up"></i>
+                                </div>
+
+                                <div>
+                                    <h4>Receitas</h4>
+                                    <p id="valor-receitas">R$ 0,00</p>
+                                </div>
+
+                                <div
+                                    class="popover-menu oculto"
+                                    id="popover-receitas">
+
+                                    <h5>Últimas Receitas</h5>
+
+                                    <ul id="lista-mini-receitas">
+                                        <!-- O JavaScript injeta os itens aqui. -->
+                                    </ul>
+
+                                    <a href="#">Ver histórico completo</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Últimas movimentações -->
+                <section class="recent-transactions">
+                    <div class="section-header">
+                        <h2>Últimas Movimentações</h2>
+                        <a href="#" class="view-all">Ver tudo</a>
+                    </div>
+
+                    <div class="transactions-list" id="lista-transacoes">
+                        <div class="empty-state">
+                            <p>Buscando transações...</p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Análise financeira -->
+                <section class="chart-section">
+                    <div class="chart-section-header">
+                        <h2>Análise Financeira</h2>
+
+                        <div
+                            class="chart-mode-switch"
+                            role="tablist"
+                            aria-label="Escolha do gráfico financeiro">
+
+                            <button
+                                id="btn-grafico-fluxo"
+                                class="chart-mode-btn ativo"
+                                type="button"
+                                role="tab"
+                                aria-selected="true"
+                                data-chart-mode="fluxo">
+
+                                Fluxo mensal
+                            </button>
+
+                            <button
+                                id="btn-grafico-alocacao"
+                                class="chart-mode-btn"
+                                type="button"
+                                role="tab"
+                                aria-selected="false"
+                                data-chart-mode="alocacao">
+
+                                Alocação da renda
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="chart-card">
+                        <div class="chart-card-header">
+                            <div>
+                                <h3 id="titulo-grafico">
+                                    Fluxo financeiro do mês
+                                </h3>
+
+                                <p id="descricao-grafico">
+                                    Receitas, despesas e resultado acumulado por dia
+                                </p>
+                            </div>
+
+                            <span
+                                id="resumo-grafico"
+                                class="chart-summary oculto">
+                            </span>
+                        </div>
+
+                        <div class="chart-canvas-container">
+                            <canvas
+                                id="grafico-financeiro"
+                                role="img"
+                                aria-label="Gráfico de análise financeira mensal">
+                            </canvas>
+
+                            <div
+                                id="grafico-vazio"
+                                class="chart-empty oculto">
+
+                                <i class="fa-solid fa-chart-line"></i>
+
+                                <p>
+                                    Ainda não há dados suficientes para gerar o gráfico.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
 
             </div>
-        </div>
-
-        <div class="chart-card">
-
-            <div class="chart-card-header">
-                <div>
-                    <h3 id="titulo-grafico">
-                        Fluxo financeiro do mês
-                    </h3>
-
-                    <p id="descricao-grafico">
-                        Receitas, despesas e resultado acumulado por dia
-                    </p>
-                </div>
-
-                <!--
-                    Recebe uma informação curta, como:
-                    "82,5% da renda alocada".
-                    No gráfico de fluxo mensal ele fica oculto.
-                -->
-                <span
-                    id="resumo-grafico"
-                    class="chart-summary oculto">
-                </span>
-            </div>
-
-            <div class="chart-canvas-container">
-
-                <canvas
-                    id="grafico-financeiro"
-                    role="img"
-                    aria-label="Gráfico de análise financeira mensal">
-                </canvas>
-
-                <div
-                    id="grafico-vazio"
-                    class="chart-empty oculto">
-
-                    <i class="fa-solid fa-chart-line"></i>
-
-                    <p>
-                        Ainda não há dados suficientes para gerar o gráfico.
-                    </p>
-
-                </div>
-
-            </div>
-
-        </div>
-
-    </section>
-
-            </section>
         </main>
-    <!-- MODAL DE NOVA TRANSAÇÃO -->
+    </div>
+
+    <!-- Modal de movimentação -->
     <div id="modal-transacao" class="modal-overlay oculto">
         <div class="modal-content">
             <div class="modal-header">
                 <h2>Registrar Movimentação</h2>
-                <button id="btn-fechar-modal" class="btn-close"><i class="fa-solid fa-xmark"></i></button>
+
+                <button
+                    id="btn-fechar-modal"
+                    class="btn-close"
+                    type="button"
+                    aria-label="Fechar formulário de movimentação">
+
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
             </div>
-            
+
             <form id="form-transacao">
                 <div class="form-group">
                     <label for="input-descricao">Descrição</label>
-                    <input type="text" id="input-descricao" name="descricao" placeholder="Ex: Conta de Luz" required autocomplete="off">
+                    <input
+                        type="text"
+                        id="input-descricao"
+                        name="descricao"
+                        placeholder="Ex: Conta de Luz"
+                        required
+                        autocomplete="off">
                 </div>
-                
+
                 <div class="form-row">
                     <div class="form-group">
                         <label for="input-valor">Valor (R$)</label>
-                        <input type="number" id="input-valor" name="valor" step="0.01" min="0.01" placeholder="0.00" required>
+                        <input
+                            type="number"
+                            id="input-valor"
+                            name="valor"
+                            step="0.01"
+                            min="0.01"
+                            placeholder="0.00"
+                            required>
                     </div>
-                    
+
                     <div class="form-group">
                         <label for="select-tipo">Tipo</label>
                         <select id="select-tipo" name="tipo" required>
@@ -224,62 +310,127 @@
                 <div class="form-row">
                     <div class="form-group">
                         <label for="input-data">Data</label>
-                        <input type="date" id="input-data" name="data" required>
+                        <input
+                            type="date"
+                            id="input-data"
+                            name="data"
+                            required>
                     </div>
-                    
+
                     <div class="form-group">
-                        <label for="select-categoria" style="display: flex; justify-content: space-between;">
+                        <label
+                            for="select-categoria"
+                            style="display: flex; justify-content: space-between;">
+
                             Categoria
-                            <!-- O NOVO ATALHO DIRETO -->
-                            <a href="#" id="btn-abrir-gerenciador-categorias" style="color: var(--cor-destaque); font-size: 13px; text-decoration: none;"><i class="fa-solid fa-gear"></i> Gerenciar</a>
+
+                            <a
+                                href="#"
+                                id="btn-abrir-gerenciador-categorias"
+                                style="color: var(--cor-destaque); font-size: 13px; text-decoration: none;">
+
+                                <i class="fa-solid fa-gear"></i>
+                                Gerenciar
+                            </a>
                         </label>
-                        <select id="select-categoria" name="categoria_id" required>
-                            <option value="" disabled selected>Carregando categorias...</option>
+
+                        <select
+                            id="select-categoria"
+                            name="categoria_id"
+                            required>
+
+                            <option value="" disabled selected>
+                                Carregando categorias...
+                            </option>
                         </select>
                     </div>
                 </div>
 
                 <div class="form-group">
                     <label for="input-meta">ID Meta (Opcional)</label>
-                    <input type="number" id="input-meta" name="meta_id" min="1" placeholder="Vincular a uma meta?">
+                    <input
+                        type="number"
+                        id="input-meta"
+                        name="meta_id"
+                        min="1"
+                        placeholder="Vincular a uma meta?">
                 </div>
 
                 <div class="modal-actions">
-                    <button type="button" id="btn-cancelar-modal" class="btn-secondary">Cancelar</button>
-                    <button type="submit" id="btn-salvar-transacao" class="btn-primary">Salvar</button>
+                    <button
+                        type="button"
+                        id="btn-cancelar-modal"
+                        class="btn-secondary">
+
+                        Cancelar
+                    </button>
+
+                    <button
+                        type="submit"
+                        id="btn-salvar-transacao"
+                        class="btn-primary">
+
+                        Salvar
+                    </button>
                 </div>
             </form>
         </div>
     </div>
-    <!-- MODAL DE GERENCIAMENTO DE CATEGORIAS -->
-    <!-- Z-index maior para sobrepor o modal de transações se estiver aberto -->
-    <div id="modal-categorias" class="modal-overlay oculto" style="z-index: 1050;">
+
+    <!-- Modal de gerenciamento de categorias -->
+    <div
+        id="modal-categorias"
+        class="modal-overlay oculto"
+        style="z-index: 1050;">
+
         <div class="modal-content" style="max-width: 400px;">
             <div class="modal-header">
                 <h2>Categorias</h2>
-                <button id="btn-fechar-categorias" class="btn-close"><i class="fa-solid fa-xmark"></i></button>
+
+                <button
+                    id="btn-fechar-categorias"
+                    class="btn-close"
+                    type="button"
+                    aria-label="Fechar gerenciador de categorias">
+
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
             </div>
 
             <div class="category-manager">
-                <!-- Formulário rápido para criar nova categoria -->
-                <form id="form-nova-categoria" class="form-row" style="margin-bottom: 24px;">
-                    <input type="text" id="input-nova-categoria" placeholder="Nova categoria..." required style="flex: 1;">
-                    <button type="submit" class="btn-primary" id="btn-salvar-categoria"><i class="fa-solid fa-plus"></i></button>
+                <form
+                    id="form-nova-categoria"
+                    class="form-row"
+                    style="margin-bottom: 24px;">
+
+                    <input
+                        type="text"
+                        id="input-nova-categoria"
+                        placeholder="Nova categoria..."
+                        required
+                        style="flex: 1;">
+
+                    <button
+                        type="submit"
+                        class="btn-primary"
+                        id="btn-salvar-categoria"
+                        aria-label="Criar categoria">
+
+                        <i class="fa-solid fa-plus"></i>
+                    </button>
                 </form>
 
-                <!-- Lista dinâmica de categorias existentes para edição/exclusão -->
                 <div class="categories-list-container">
                     <ul id="lista-gerenciador-categorias">
-                        <!-- O JS vai injetar os itens aqui -->
+                        <!-- O JavaScript injeta os itens aqui. -->
                     </ul>
                 </div>
             </div>
         </div>
     </div>
-    <script
-    src="https://cdn.jsdelivr.net/npm/chart.js@4.5.1/dist/chart.umd.min.js">
-    </script>
-    <!-- sscript que fará a mágica no futuro -->
+
+    <!-- Chart.js precisa ser carregado antes do app.js. -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.1/dist/chart.umd.min.js"></script>
     <script src="app.js"></script>
 </body>
 </html>
